@@ -57,8 +57,6 @@ void StopStatRequest(const TransportCatalogue& catalogue, std::string_view stop_
 		output << "Stop " << stop_name << ": no buses" << std::endl;		
 	}
 	else{
-		std::sort(result.begin(), result.end());
-
 		output << "Stop " << stop_name << ": buses";
 		for (auto& bus : result) {
 			output << " " << bus;

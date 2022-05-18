@@ -9,6 +9,7 @@
 int main() {
 	std::cout << "Running tests:" << std::endl;
 	tests::Test();	
+	std::cout << "OK" << std::endl;
 		
 	Catalogue::TransportCatalogue test_catalogue;
 	ProcessAddingRequests(test_catalogue, std::cin);

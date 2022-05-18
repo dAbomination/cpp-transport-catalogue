@@ -104,10 +104,10 @@ namespace tests {
 	void Test() {
 		TestRunner tr;
 
-		RUN_TEST(tr, AddingNewStop);
-		RUN_TEST(tr, AddingNewBusNotCirular);
-		RUN_TEST(tr, AddingNewBusCirular);
-		RUN_TEST(tr, GetStopsBuses);
+		//RUN_TEST(tr, AddingNewStop);
+		//RUN_TEST(tr, AddingNewBusNotCirular);
+		//RUN_TEST(tr, AddingNewBusCirular);
+		//RUN_TEST(tr, GetStopsBuses);
 
 		std::string dir = "E:/source/VisualStudio/transport-catalogue/transport-catalogue/test_data/";
 
