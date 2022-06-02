@@ -406,8 +406,7 @@ namespace json {
         return root_;
     }
 
-    void PrintNode(const Node& node, const PrintContext& ctx) {   
-        ctx.PrintIndent();
+    void PrintNode(const Node& node, const PrintContext& ctx) {        
         std::visit(
             [&ctx](const auto& value) { PrintValue(value, ctx); },
             node.GetValue());
@@ -418,83 +417,79 @@ namespace json {
     }
 
     void Print(const Document& doc, std::ostream& output) {
-        PrintContext ctx{ output };
-        PrintNode(doc.GetRoot(), ctx);
+        PrintContext ctx{ output };        
+        PrintNode(doc.GetRoot(), ctx);         
     }
 
     // Перегрузка функции PrintValue для вывода значений null
-    void PrintValue(std::nullptr_t, const PrintContext& ctx) {
-        auto& out = ctx.out;
-        out << "null";
+    void PrintValue(std::nullptr_t, const PrintContext& ctx) {        
+        ctx.out << "null";
     }
 
-    void PrintValue(json::Array data, const PrintContext& ctx) {
-        auto& out = ctx.out;
-        out << "[" << std::endl;
+    void PrintValue(json::Array data, const PrintContext& ctx) {        
+        ctx.out << "[" << std::endl;
 
-        for (auto it = data.begin(); it != data.end(); ++it) {            
+        for (auto it = data.begin(); it != data.end(); ++it) {             
             PrintNode(*it, ctx);
             if (it != --data.end()) {
-                out << ",";
+                ctx.out << ",";
             }
-            out << std::endl;
+            ctx.out << std::endl;
         }
         
-        out << "]";
+        ctx.out << "]";
     }
 
-    void PrintValue(json::Dict data, const PrintContext& ctx) {
-        auto& out = ctx.out;
-        out << "{ " << std::endl;
+    void PrintValue(json::Dict data, const PrintContext& ctx) {        
+        ctx.out << "{" << std::endl;
 
-        for (auto it = data.begin(); it != data.end(); ++it) { 
+        for (auto it = data.begin(); it != data.end(); ++it) {  
+            
             PrintNode(it->first, ctx);
-            out << ": ";
+            ctx.out << ": ";
             PrintNode(it->second, ctx);
             if (it != --data.end()) {
-                out << ", ";
+                ctx.out << ", ";
             }
-            out << std::endl;
+            ctx.out << std::endl;
         }
         
-        out << " }";
+        ctx.out << "}";
     }
 
-    void PrintValue(bool value, const PrintContext& ctx) {
-        auto& out = ctx.out;
+    void PrintValue(bool value, const PrintContext& ctx) {        
         if (value) {
-            out << "true";
+            ctx.out << "true";
         }
         else {
-            out << "false";
+            ctx.out << "false";
         }
     }
 
-    void PrintValue(std::string data, const PrintContext& ctx) {
-        auto& out = ctx.out;
-        out << '\"';
+    void PrintValue(std::string data, const PrintContext& ctx) {        
+        ctx.out << '\"';
 
         for (char c : data) {
             switch (c) {
             case '"':
-                out << "\\\"";
+                ctx.out << "\\\"";
                 break;
             case '\\':
-                out << "\\\\";
+                ctx.out << "\\\\";
                 break;
             case '\n':
-                out << "\\n";
+                ctx.out << "\\n";
                 break;
             case '\r':
-                out << "\\r";
+                ctx.out << "\\r";
                 break;
             default:
-                out << c;
+                ctx.out << c;
                 break;
             }
         }
 
-        out << '\"';
+        ctx.out << '\"';
     }
 
     bool Node::operator==(const Node& node) const {

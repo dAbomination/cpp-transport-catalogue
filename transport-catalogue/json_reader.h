@@ -3,6 +3,7 @@
 #include "transport_catalogue.h"
 #include "json.h"
 #include "request_handler.h"
+#include "map_renderer.h"
 
 #include <vector>
 #include <variant>
@@ -86,6 +87,9 @@ namespace JSONReader {
 		// Результат выполнения запросов
 		json::Array requests_result_;
 
+		// Парсит нод и возвращает одно из возможных значений svg::Color
+		svg::Color ParseColor(const json::Node& color_node);
+
 		// Парсит массив запросов на добавление и возвращает отсортированный InputRequestPool
 		InputRequestPool ParseInputRequests(const json::Array& data);
 		// Выполняет запросы на добавление данных в каталог
@@ -95,6 +99,8 @@ namespace JSONReader {
 		OutputRequestPool ParseOutputRequests(const json::Array& data);
 		// Выполняет запрсоы на поиск информации
 		void ExecuteOutputRequests(const OutputRequestPool& requests);
+
+		void ParseRenderSettings(const json::Dict& data);
 	};
 
 	

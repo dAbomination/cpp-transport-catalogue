@@ -157,6 +157,56 @@ namespace JSONReader {
 
 	}
 
+	svg::Color JSONLoader::ParseColor(const json::Node& color_node) {
+		if (color_node.IsString()) {
+			return color_node.AsString();
+		}
+		else {
+			int red = color_node.AsArray()[0].AsInt();
+			int green = color_node.AsArray()[1].AsInt();
+			int blue = color_node.AsArray()[2].AsInt();
+			// Если размер массива больше 3, то задана ещё прозрачность
+			if (color_node.AsArray().size() > 3) {
+				double opacity = color_node.AsArray()[2].AsDouble();
+				return std::move(svg::Rgba(red, green, blue, opacity));
+			}
+			else {
+				return std::move(svg::Rgb(red, green, blue));
+			}
+		}
+	}
+
+	void JSONLoader::ParseRenderSettings(const json::Dict& data) {
+		MapRender::RenderSettings render_settings;
+		
+		render_settings.width_ = data.at("width").AsDouble();
+		render_settings.height_ = data.at("height").AsDouble();
+		render_settings.padding_ = data.at("padding").AsDouble();
+		render_settings.line_width_ = data.at("line_width").AsDouble();
+		render_settings.stop_radius_ = data.at("stop_radius").AsDouble();
+		render_settings.bus_label_font_size_ = data.at("bus_label_font_size").AsInt();
+		
+		render_settings.bus_label_offset_ = { 
+			data.at("bus_label_offset").AsArray()[0].AsInt(), 
+			data.at("bus_label_offset").AsArray()[1].AsInt()};
+		
+		render_settings.stop_label_font_size_ = data.at("stop_label_font_size").AsInt();
+
+		render_settings.stop_label_offset_ = {
+			data.at("stop_label_offset").AsArray()[0].AsInt(),
+			data.at("stop_label_offset").AsArray()[1].AsInt() };
+		
+		// Считываем цвет, может быть задан строкой, 3 числами int или 3 int + 1 double
+		
+		render_settings.underlayer_color_ = ParseColor(data.at("underlayer_color"));
+		
+		render_settings.underlayer_width_ = render_settings.stop_radius_ = data.at("underlayer_width").AsDouble();
+		// Добавляем все цвета в палитру
+		for (const auto& color : data.at("color_palette").AsArray()) {
+			render_settings.color_palette_.push_back(ParseColor(color));
+		}
+	}
+
 	void JSONLoader::LoadJSON(std::istream& input) {
 		// Загружаем данные из потока в Document
 		json::Document input_data = json::Load(input);
@@ -176,6 +226,10 @@ namespace JSONReader {
 		OutputRequestPool output_requests = std::move(ParseOutputRequests(stat_requests));
 		// Выполняем полученные запросы и формируем массив JSON ответов
 		ExecuteOutputRequests(output_requests);
+
+		// Обрабатываем render_settings настройки 
+		const json::Dict& render_settings = input_data.GetRoot().AsMap().at("render_settings").AsMap();
+		ParseRenderSettings(render_settings);
 	}
 
 	void JSONLoader::PrintJSON(std::ostream& output) {
