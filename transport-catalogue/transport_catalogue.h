@@ -14,7 +14,12 @@
 namespace Catalogue {
 	// Кол-во остановок, кол-во уникальных остановок,
 	// реальное расстояние и отношение реального к географическому
-	using BusInfo = std::tuple<int, int, double, double>;
+	struct BusInfo {
+		int stop_num_;
+		size_t unique_stop_num_;
+		double real_distance_;
+		double curvature_;
+	};
 
 	// Контейнер с именами маршрутов, проходящих через остановку
 	using StopInfo = std::set<std::string_view>;
@@ -56,7 +61,9 @@ namespace Catalogue {
 
 		// Добавляет маршрут в транспортный справочник, рассчитывая его реальную и географическу длина
 		// и кол-во уникальных остановок
-		void AddBus(std::string_view bus_name, std::vector<std::string> stops, bool is_circular);
+		// В векторе должны быть указаны остановки Stop1 > Stop2 > .... > StopN вне зависимости от того
+		// кольцевой это маршрут или нет
+		void AddBus(std::string_view bus_name, std::vector<std::string_view> stops, bool is_circular);
 
 		// Ищет маршрут по имени
 		const Bus* FindBus(std::string_view bus_name) const;
@@ -66,8 +73,8 @@ namespace Catalogue {
 		// отношение реальной длины к географической
 		BusInfo GetBusInfo(std::string_view bus_name) const;
 
-		// Ищут остановку по имени, возвращает вектор с названиями маршрутов, проходящих через остановку
-		StopInfo GetStopInfo(std::string_view stop_name) const;
+		// Ищет остановку по имени, возвращает вектор с названиями маршрутов, проходящих через остановку
+		const StopInfo* GetStopInfo(std::string_view stop_name) const;
 
 	private:
 		std::deque<Stop> stops_;

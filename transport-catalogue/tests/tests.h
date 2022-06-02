@@ -1,9 +1,8 @@
 #include <cassert>
 
 #include "test_framework.h"
-#include "../stat_reader.h"
-#include "../input_reader.h"
 #include "../transport_catalogue.h"
+#include "../json_reader.h"
 
 namespace tests {
 	
@@ -78,26 +77,42 @@ namespace tests {
 		}
 	}
 	
-	// Проверяем правильность вывода на нескольких файлах (запросах и ожидаемых ответах)
-	void CheckIfCorrect(const std::string& input, const std::string& output) {
-		TransportCatalogue temp_catalogue;
+	//// Проверяем правильность вывода на нескольких файлах (запросах и ожидаемых ответах)
+	//void CheckIfCorrect(const std::string& input, const std::string& output) {
+	//	TransportCatalogue temp_catalogue;
 
-		std::stringstream output_data;
+	//	std::stringstream output_data;
+	//	std::ifstream input_data;
+	//	input_data.open(input);
+
+	//	ProcessAddingRequests(temp_catalogue, input_data);
+	//	ProcessStatRequests(temp_catalogue, input_data, output_data);
+	//	//ProcessStatRequests(temp_catalogue, input_data, std::cout);
+
+	//	// Сверяем данные файла с ожидаемым выводом, с фактическим
+	//	std::ifstream expected_data;
+	//	expected_data.open(output);
+
+	//	std::string expected_string, data;
+	//	while (std::getline(expected_data, expected_string) && std::getline(output_data, data)) {
+	//		AssertEqual(data, expected_string);
+	//	}
+	//	
+	//}
+
+	void TestJSONLoad() {
+		std::string dir = "E:/source/VisualStudio/cpp-transport-catalogue/transport-catalogue/test_data/";
+
+		TransportCatalogue testcatalogue;
+		JSONReader::JSONLoader temp_reader(testcatalogue);
+
 		std::ifstream input_data;
-		input_data.open(input);
+		input_data.open(dir + "test_JSON.txt");
 
-		ProcessAddingRequests(temp_catalogue, input_data);
-		ProcessStatRequests(temp_catalogue, input_data, output_data);
-		//ProcessStatRequests(temp_catalogue, input_data, std::cout);
-
-		// Сверяем данные файла с ожидаемым выводом, с фактическим
-		std::ifstream expected_data;
-		expected_data.open(output);
-
-		std::string expected_string, data;
-		while (std::getline(expected_data, expected_string) && std::getline(output_data, data)) {
-			AssertEqual(data, expected_string);
+		if (input_data.is_open()) {
+			temp_reader.LoadJSON(input_data);
 		}
+		temp_reader.PrintJSON(std::cout);
 		
 	}
 
@@ -109,12 +124,14 @@ namespace tests {
 		//RUN_TEST(tr, AddingNewBusCirular);
 		//RUN_TEST(tr, GetStopsBuses);
 
-		std::string dir = "E:/source/VisualStudio/transport-catalogue/transport-catalogue/test_data/";
+		//std::string dir = "E:/source/VisualStudio/transport-catalogue/transport-catalogue/test_data/";
 
 		// Проверяем с готовыми файлами
-		CheckIfCorrect(dir + "tests3_input.txt", dir + "tests3_output.txt");		
-		CheckIfCorrect(dir + "tsC_case1_input.txt", dir + "tsC_case1_output1.txt");
+		//CheckIfCorrect(dir + "tests3_input.txt", dir + "tests3_output.txt");		
+		//CheckIfCorrect(dir + "tsC_case1_input.txt", dir + "tsC_case1_output1.txt");
 		//CheckIfCorrect(dir + "tsC_case1_input.txt", dir + "tsC_case1_output2.txt");
+
+		TestJSONLoad();
 	}
 }
 

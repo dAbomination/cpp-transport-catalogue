@@ -23,12 +23,12 @@ namespace Catalogue {
 		stops_to_distance_[{TransportCatalogue::FindStop(stop1), TransportCatalogue::FindStop(stop2)}] = distance;
 	}
 
-	void TransportCatalogue::AddBus(std::string_view bus_name, std::vector<std::string> stops, bool is_circular) {
+	void TransportCatalogue::AddBus(std::string_view bus_name, std::vector<std::string_view> stops, bool is_circular) {
 		std::vector<const Stop*> temp_stops;
 		temp_stops.reserve(stops.size());
 
 		// Находим все остановки по имени, ищем их в справочнике и добавляем их во временный вектор
-		for (const std::string& stop : stops) {
+		for (const std::string_view stop : stops) {
 			// Находим остановку в справочнике
 			temp_stops.push_back(TransportCatalogue::FindStop(stop));
 		}			
@@ -126,17 +126,25 @@ namespace Catalogue {
 		if (!bus) {
 			return {};
 		}
-		int stops_num = bus->is_circular_ ? bus->stops_.size() + 1 : 2 * bus->stops_.size() - 1;
+		int stops_num = bus->is_circular_ ?
+			static_cast<int>(bus->stops_.size() + 1) :
+			static_cast<int>(2 * bus->stops_.size() - 1);
 
-		return { stops_num,
+		return { stops_num,			
 			bus->unique_stops_,
 			bus->length_real_,
 			bus->length_real_/bus->length_geo_
 		};
 	}
 
-	StopInfo TransportCatalogue::GetStopInfo(std::string_view stop_name) const {
-		return stop_to_buses_.at(FindStop(stop_name));
+	const StopInfo* TransportCatalogue::GetStopInfo(std::string_view stop_name) const {
+		const Stop* stop = FindStop(stop_name);
+		
+		if (!stop) {
+			return nullptr;
+		}
+
+		return &stop_to_buses_.at(stop);;
 	}
 
 	std::optional<double> TransportCatalogue::GetStopsDistance(const Stop* stop1, const Stop* stop2) const {
@@ -148,7 +156,7 @@ namespace Catalogue {
 
 	size_t TransportCatalogue::StopsToDistanceHasher::operator()(const std::pair<const Stop*, const Stop*>& data) const
 	{		
-		return stop_ptr_hasher_(data.first) + 37 ^ 2 * stop_ptr_hasher_(data.second);		
+		return stop_ptr_hasher_(data.first) + (37 ^ 2) * stop_ptr_hasher_(data.second);		
 	}
 
 }
