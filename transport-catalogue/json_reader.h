@@ -71,12 +71,15 @@ namespace JSONReader {
 		std::string_view bus_name_;
 	};
 
-	using InputRequestPool = std::vector<std::variant<StopInputRequest, StopToStopDistanceInputRequest, BusInputRequest>>;
-	using OutputRequestPool = std::vector<std::variant<StopOutputRequest, BusOutputRequest>>;
+	using InputRequest = std::variant<StopInputRequest, StopToStopDistanceInputRequest, BusInputRequest>;
+	using OutputRequest = std::variant<StopOutputRequest, BusOutputRequest>;
+
+	using InputRequestPool = std::vector<InputRequest>;
+	using OutputRequestPool = std::vector<OutputRequest>;
 
 	class JSONLoader {
 	public:
-		JSONLoader(Catalogue::TransportCatalogue& catalogue);
+		JSONLoader(Catalogue::TransportCatalogue& catalogue, RqtHandler::RequestHandler& request_handler);
 
 		// Считываем JSON данные из входного потока и добавляет данные в catalogue
 		void LoadJSON(std::istream& input);
@@ -84,6 +87,7 @@ namespace JSONReader {
 		void PrintJSON(std::ostream& output);
 	private:
 		Catalogue::TransportCatalogue& catalogue_;
+		RqtHandler::RequestHandler& request_handler_;
 		// Результат выполнения запросов
 		json::Array requests_result_;
 

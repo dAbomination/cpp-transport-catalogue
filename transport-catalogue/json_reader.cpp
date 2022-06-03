@@ -2,8 +2,8 @@
 
 namespace JSONReader {
 
-	JSONLoader::JSONLoader(Catalogue::TransportCatalogue& catalogue)
-		: catalogue_(catalogue) {
+	JSONLoader::JSONLoader(Catalogue::TransportCatalogue& catalogue, RqtHandler::RequestHandler& request_handler)
+		: catalogue_(catalogue), request_handler_(request_handler) {
 	}
 
 	InputRequestPool JSONLoader::ParseInputRequests(const json::Array& data) {
@@ -72,16 +72,16 @@ namespace JSONReader {
 		// Выполняем все запросы на добавление данных в справочник в зависимости от индекса запроса
 		for (const auto& req : requests) {
 			if (req.index() == 0) {
-				const StopInputRequest& temp_req_1 = std::get<StopInputRequest>(req);
-				catalogue_.AddStop(temp_req_1.name_, temp_req_1.latitude_, temp_req_1.longitude_);
+				const StopInputRequest& temp_req = std::get<StopInputRequest>(req);
+				catalogue_.AddStop(temp_req.name_, temp_req.latitude_, temp_req.longitude_);
 			}
 			else if (req.index() == 1) {
-				const StopToStopDistanceInputRequest& temp_req_2 = std::get<StopToStopDistanceInputRequest>(req);
-				catalogue_.AddStopToStopDistance(temp_req_2.stop1_, temp_req_2.stop2_, temp_req_2.distance_);
+				const StopToStopDistanceInputRequest& temp_req = std::get<StopToStopDistanceInputRequest>(req);
+				catalogue_.AddStopToStopDistance(temp_req.stop1_, temp_req.stop2_, temp_req.distance_);
 			}
 			else if (req.index() == 2) {
-				const BusInputRequest& temp_req_3 = std::get<BusInputRequest>(req);
-				catalogue_.AddBus(temp_req_3.bus_name_, temp_req_3.stops_, temp_req_3.is_circular_);
+				const BusInputRequest& temp_req = std::get<BusInputRequest>(req);
+				catalogue_.AddBus(temp_req.bus_name_, temp_req.stops_, temp_req.is_circular_);
 			}						
 		}
 	}
@@ -110,13 +110,12 @@ namespace JSONReader {
 	}
 
 	void JSONLoader::ExecuteOutputRequests(const OutputRequestPool& requests) {
-		requst_handler::RequestHandler handler(catalogue_);
-
+		
 		for (const auto& req : requests) {
 			// Запрос на поиск остановки
 			if (req.index() == 0) {
 				// Находим список всех маршрутов проходящих через остановку
-				auto buses = handler.GetBusesByStop(std::get<StopOutputRequest>(req).stop_name_);
+				auto buses = request_handler_.GetBusesByStop(std::get<StopOutputRequest>(req).stop_name_);
 				json::Dict result;				
 
 				result["request_id"] = std::get<StopOutputRequest>(req).request_id_;
@@ -136,7 +135,7 @@ namespace JSONReader {
 			}
 			// Запрос на поиск маршрута
 			else if (req.index() == 1) {
-				const auto& bus_info = handler.GetBusStat(std::get<BusOutputRequest>(req).bus_name_);
+				const auto& bus_info = request_handler_.GetBusStat(std::get<BusOutputRequest>(req).bus_name_);
 				json::Dict result;
 
 				// Добавляем данные иаршрута
@@ -177,7 +176,7 @@ namespace JSONReader {
 	}
 
 	void JSONLoader::ParseRenderSettings(const json::Dict& data) {
-		MapRender::RenderSettings render_settings;
+		renderer::RenderSettings render_settings;
 		
 		render_settings.width_ = data.at("width").AsDouble();
 		render_settings.height_ = data.at("height").AsDouble();
@@ -187,14 +186,14 @@ namespace JSONReader {
 		render_settings.bus_label_font_size_ = data.at("bus_label_font_size").AsInt();
 		
 		render_settings.bus_label_offset_ = { 
-			data.at("bus_label_offset").AsArray()[0].AsInt(), 
-			data.at("bus_label_offset").AsArray()[1].AsInt()};
+			data.at("bus_label_offset").AsArray()[0].AsDouble(), 
+			data.at("bus_label_offset").AsArray()[1].AsDouble()};
 		
 		render_settings.stop_label_font_size_ = data.at("stop_label_font_size").AsInt();
 
 		render_settings.stop_label_offset_ = {
-			data.at("stop_label_offset").AsArray()[0].AsInt(),
-			data.at("stop_label_offset").AsArray()[1].AsInt() };
+			data.at("stop_label_offset").AsArray()[0].AsDouble(),
+			data.at("stop_label_offset").AsArray()[1].AsDouble() };
 		
 		// Считываем цвет, может быть задан строкой, 3 числами int или 3 int + 1 double
 		
@@ -205,6 +204,8 @@ namespace JSONReader {
 		for (const auto& color : data.at("color_palette").AsArray()) {
 			render_settings.color_palette_.push_back(ParseColor(color));
 		}
+
+		request_handler_.SetRenderSettings(std::move(render_settings));
 	}
 
 	void JSONLoader::LoadJSON(std::istream& input) {
@@ -214,6 +215,7 @@ namespace JSONReader {
 		// Верхнеруовневая структура это словарь, содержащий ключи:
 		// base_requests — массив с описанием автобусных маршрутов и остановок,
 		// stat_requests — массив с запросами к транспортному справочнику.
+		// render_settings - словарь с настройками для визуализации
 
 		// Вначале обрабатываем base_requests, получаем массив всех запросов
 		const json::Array& base_requests = input_data.GetRoot().AsMap().at("base_requests").AsArray();
@@ -222,10 +224,10 @@ namespace JSONReader {
 		ExecuteInputRequests(input_requests);
 
 		// Обрабатываем stat_requests запросы 
-		const json::Array& stat_requests = input_data.GetRoot().AsMap().at("stat_requests").AsArray();
-		OutputRequestPool output_requests = std::move(ParseOutputRequests(stat_requests));
+		//const json::Array& stat_requests = input_data.GetRoot().AsMap().at("stat_requests").AsArray();
+		//OutputRequestPool output_requests = std::move(ParseOutputRequests(stat_requests));
 		// Выполняем полученные запросы и формируем массив JSON ответов
-		ExecuteOutputRequests(output_requests);
+		//ExecuteOutputRequests(output_requests);
 
 		// Обрабатываем render_settings настройки 
 		const json::Dict& render_settings = input_data.GetRoot().AsMap().at("render_settings").AsMap();

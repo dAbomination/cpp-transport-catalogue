@@ -9,7 +9,7 @@ namespace Catalogue {
 		stop_to_buses_[&stops_.back()];
 	}
 
-	const TransportCatalogue::Stop* TransportCatalogue::FindStop(std::string_view stop_name) const {
+	const Stop* TransportCatalogue::FindStop(std::string_view stop_name) const {
 		// Если в справочнике нет остановки stop_name, возвращаем нулевой указатель
 		if (stopname_to_stop_.count(stop_name)) {
 			return stopname_to_stop_.at(stop_name);
@@ -103,6 +103,7 @@ namespace Catalogue {
 			geo_distance
 		});
 		busname_to_bus_.insert({ buses_.back().bus_name_, &buses_.back() });		
+		buses_names_.insert(buses_.back().bus_name_);
 
 		// Добавляем данный маршрут в контейнер который отвечает за маршруты проходящие через остановки
 		for (auto temp : temp_stops) {
@@ -110,7 +111,7 @@ namespace Catalogue {
 		}
 	}
 
-	const TransportCatalogue::Bus* TransportCatalogue::FindBus(std::string_view bus_name) const {
+	const Bus* TransportCatalogue::FindBus(std::string_view bus_name) const {
 		// Если в справочнике нет маршрута bus_name, возвращаем нулевой указатель
 		if (busname_to_bus_.count(bus_name)) {
 			return busname_to_bus_.at(bus_name);
@@ -145,6 +146,10 @@ namespace Catalogue {
 		}
 
 		return &stop_to_buses_.at(stop);;
+	}
+
+	const std::set<std::string_view>& TransportCatalogue::GetBuses() const {
+		return buses_names_;
 	}
 
 	std::optional<double> TransportCatalogue::GetStopsDistance(const Stop* stop1, const Stop* stop2) const {

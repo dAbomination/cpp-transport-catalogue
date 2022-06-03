@@ -10,9 +10,6 @@ namespace Catalogue {
 
 	class TransportCatalogueDomain {
 
-
-
 	};
-
 }
 

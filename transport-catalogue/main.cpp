@@ -2,6 +2,9 @@
 #include <fstream>
 
 #include "transport_catalogue.h"
+#include "map_renderer.h"
+#include "request_handler.h"
+#include "json_reader.h"
 #include "tests/tests.h"
 
 int main() {
@@ -10,11 +13,14 @@ int main() {
 	//std::cout << "OK" << std::endl;
 	
 	Catalogue::TransportCatalogue testcatalogue;
-	JSONReader::JSONLoader temp_reader(testcatalogue);
-		
+	renderer::MapRenderer testrenderer;
+
+	RqtHandler::RequestHandler testhandler(testcatalogue, testrenderer);
+	JSONReader::JSONLoader temp_reader(testcatalogue, testhandler);
+			
 	temp_reader.LoadJSON(std::cin);
 	
-	temp_reader.PrintJSON(std::cout);
+	testhandler.RenderMap().Render(std::cout);
 
 	return 0;
 }

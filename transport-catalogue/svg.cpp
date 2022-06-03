@@ -45,9 +45,7 @@ namespace svg {
     void Polyline::RenderObject(const RenderContext& context) const {
         auto& out = context.out;
         out << "<polyline"sv;
-        // Выводим атрибуты, унаследованные от PathProps
-        RenderAttrs(context.out);
-
+        // Выводим атрибуты, унаследованные от PathProps        
         out << " points=\""sv;
         for (auto& point : points_) {
             out << point.x << ","sv << point.y;
@@ -56,7 +54,9 @@ namespace svg {
                 out << " "sv;
             }
         }
-        out << "\" />"sv;
+        out << "\"";
+        RenderAttrs(context.out);
+        out << "/>"sv;
     }
 
     // ------------ Text --------------------

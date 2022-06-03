@@ -1,3 +1,5 @@
+#pragma once
+
 #include <cassert>
 
 #include "test_framework.h"
@@ -103,17 +105,20 @@ namespace tests {
 	void TestJSONLoad() {
 		std::string dir = "E:/source/VisualStudio/cpp-transport-catalogue/transport-catalogue/test_data/";
 
-		TransportCatalogue testcatalogue;
-		JSONReader::JSONLoader temp_reader(testcatalogue);
+		Catalogue::TransportCatalogue testcatalogue;
+		renderer::MapRenderer testrenderer;
+		RqtHandler::RequestHandler testhandler(testcatalogue, testrenderer);
 
+		JSONReader::JSONLoader temp_reader(testcatalogue, testhandler);
+				
 		std::ifstream input_data;
-		input_data.open(dir + "test_JSON.txt");
+		input_data.open(dir + "test_JSON_2.txt");
 
 		if (input_data.is_open()) {
 			temp_reader.LoadJSON(input_data);
-		}
-		temp_reader.PrintJSON(std::cout);
-		
+		}		
+		testhandler.RenderMap().Render(std::cout);
+		//temp_reader.PrintJSON(std::cout);
 	}
 
 	void Test() {

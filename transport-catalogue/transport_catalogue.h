@@ -21,33 +21,26 @@ namespace Catalogue {
 		double curvature_;
 	};
 
+	// Структура для описания остановки
+	struct Stop {
+		std::string stop_name_ = "";
+		geo::Coordinates stop_coordinates_;
+	};
+
+	// Структура для описани маршрута
+	struct Bus {
+		std::string bus_name_ = "";
+		std::vector<const Stop*> stops_;
+		bool is_circular_ = false;
+		size_t unique_stops_ = 0;
+		double length_real_ = 0;
+		double length_geo_ = 0;
+	};
+
 	// Контейнер с именами маршрутов, проходящих через остановку
 	using StopInfo = std::set<std::string_view>;
 
 	class TransportCatalogue {
-	private:
-		// Структура для описания остановки
-		struct Stop {
-			std::string stop_name_ = "";
-			geo::Coordinates stop_coordinates_;
-		};
-
-		// Структура для описани маршрута
-		struct Bus {
-			std::string bus_name_ = "";
-			std::vector<const Stop*> stops_;
-			bool is_circular_ = false;
-			size_t unique_stops_ = 0;
-			double length_real_ = 0;
-			double length_geo_ = 0;
-		};
-
-		struct StopsToDistanceHasher {
-			std::hash<const void*> stop_ptr_hasher_;
-			// Хэшер для пары из двух константных указателей на остновки
-			size_t operator() (const std::pair<const Stop*, const Stop*>& data) const;
-		};
-
 	public:
 
 		// Добавляет остановку в транспортный справочник
@@ -76,7 +69,15 @@ namespace Catalogue {
 		// Ищет остановку по имени, возвращает вектор с названиями маршрутов, проходящих через остановку
 		const StopInfo* GetStopInfo(std::string_view stop_name) const;
 
+		// Возвращает все имена всех существующих маршрутов
+		const std::set<std::string_view>& GetBuses() const;
 	private:
+		struct StopsToDistanceHasher {
+			std::hash<const void*> stop_ptr_hasher_;
+			// Хэшер для пары из двух константных указателей на остновки
+			size_t operator() (const std::pair<const Stop*, const Stop*>& data) const;
+		};
+
 		std::deque<Stop> stops_;
 		std::deque<Bus> buses_;
 
@@ -92,6 +93,9 @@ namespace Catalogue {
 
 		// Возвращает значение реального расстояния от stop1 до stop2, если такого значения нет возвращает nullopt
 		std::optional<double> GetStopsDistance(const Stop* stop1, const Stop* stop2) const;
+
+		// Контейнер с именами маршрутов
+		std::set<std::string_view> buses_names_;
 	};
 
 }
