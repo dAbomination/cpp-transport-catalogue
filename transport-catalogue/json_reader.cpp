@@ -166,7 +166,7 @@ namespace JSONReader {
 			int blue = color_node.AsArray()[2].AsInt();
 			// Если размер массива больше 3, то задана ещё прозрачность
 			if (color_node.AsArray().size() > 3) {
-				double opacity = color_node.AsArray()[2].AsDouble();
+				double opacity = color_node.AsArray()[3].AsDouble();
 				return std::move(svg::Rgba(red, green, blue, opacity));
 			}
 			else {

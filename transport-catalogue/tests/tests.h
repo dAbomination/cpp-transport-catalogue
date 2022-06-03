@@ -112,7 +112,7 @@ namespace tests {
 		JSONReader::JSONLoader temp_reader(testcatalogue, testhandler);
 				
 		std::ifstream input_data;
-		input_data.open(dir + "test_JSON_2.txt");
+		input_data.open(dir + "test_JSON_3.txt");
 
 		if (input_data.is_open()) {
 			temp_reader.LoadJSON(input_data);
