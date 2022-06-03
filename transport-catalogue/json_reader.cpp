@@ -199,7 +199,7 @@ namespace JSONReader {
 		
 		render_settings.underlayer_color_ = ParseColor(data.at("underlayer_color"));
 		
-		render_settings.underlayer_width_ = render_settings.stop_radius_ = data.at("underlayer_width").AsDouble();
+		render_settings.underlayer_width_ = data.at("underlayer_width").AsDouble();
 		// Добавляем все цвета в палитру
 		for (const auto& color : data.at("color_palette").AsArray()) {
 			render_settings.color_palette_.push_back(ParseColor(color));

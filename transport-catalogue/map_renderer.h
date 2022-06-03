@@ -61,10 +61,7 @@ namespace renderer {
 	};
 
 	class MapRenderer {
-	public:
-
-        MapRenderer() = default;
-
+	public: 
         // Устанаваливает настройки отрисовки
         void SetSettings(RenderSettings&& settings);
 
@@ -72,7 +69,15 @@ namespace renderer {
         void InitializeSphereProjector(const std::vector<geo::Coordinates>& geo_coords);
 
         // Создаёт ломанную линию с заданными координатами, в соответствии с настройками и цветом color
-        svg::Polyline MakePolyLine(const std::vector<svg::Point>& points, svg::Color color);
+        svg::Polyline AddPolyLine(const std::vector<svg::Point>& points, svg::Color color);              
+        // Добавляет в документ название маршрута и подложки
+        svg::Text AddBusNameText(svg::Point point, std::string_view text, svg::Color color);
+        svg::Text AddSubstrateBusNameText(svg::Point point, std::string_view text);
+        // Добавляет символ сотановки
+        svg::Circle AddStopSymbol(svg::Point point);
+        // Добавляет в документ название остановки и подложки
+        svg::Text AddStopNameText(svg::Point point, std::string_view text);
+        svg::Text AddSubstrateStopNameText(svg::Point point, std::string_view text);
 
         // Возвращает Point соответствующий заданным координатам
         svg::Point GetPoint(geo::Coordinates coord);
@@ -80,8 +85,11 @@ namespace renderer {
         svg::Color GetColor(int num);
 
 	private:
-        RenderSettings render_settings_;
+        RenderSettings render_settings_;        
         std::unique_ptr<SphereProjector> sphere_projector = nullptr;
+
+        // Создаёт текст с именем остановки и подложку для этого текста
+        
 	};
 	
 

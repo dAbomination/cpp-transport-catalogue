@@ -2,29 +2,34 @@
 
 #include "transport_catalogue.h"
 #include "map_renderer.h"
+//#include "json_reader.h"
+
 
 namespace RqtHandler {
 
-    // Класс RequestHandler играет роль Фасада, упрощающего взаимодействие JSON reader-а
-    // с другими подсистемами приложения.
-    class RequestHandler {
-    public:
-        RequestHandler(Catalogue::TransportCatalogue& db, renderer::MapRenderer& renderer);
+	// Класс RequestHandler играет роль Фасада, упрощающего взаимодействие JSON reader-а
+	// с другими подсистемами приложения.
+	class RequestHandler {
+	public:
+		RequestHandler(Catalogue::TransportCatalogue& db, renderer::MapRenderer& renderer);
 
-        // Возвращает информацию о маршруте (запрос Bus)
-        std::optional<Catalogue::BusInfo> GetBusStat(const std::string_view& bus_name) const;
+		// Загружает данные из потока и добавляет в справочник
+		void LoadFromJSON(std::istream& input);
 
-        // Возвращает маршруты, проходящие через остановку
-        const Catalogue::StopInfo* GetBusesByStop(const std::string_view& stop_name) const;
+		// Возвращает информацию о маршруте (запрос Bus)
+		std::optional<Catalogue::BusInfo> GetBusStat(const std::string_view& bus_name) const;
 
-        svg::Document RenderMap() const;
+		// Возвращает маршруты, проходящие через остановку
+		const Catalogue::StopInfo* GetBusesByStop(const std::string_view& stop_name) const;
 
-        void SetRenderSettings(renderer::RenderSettings settings);
-        
-    private:
-        // RequestHandler использует агрегацию объектов "Транспортный Справочник" и "Визуализатор Карты"
-        const Catalogue::TransportCatalogue& db_;
-        renderer::MapRenderer& renderer_;
-    };
+		svg::Document RenderMap() const;
+
+		void SetRenderSettings(renderer::RenderSettings settings);
+		
+	private:
+		// RequestHandler использует агрегацию объектов "Транспортный Справочник" и "Визуализатор Карты"
+		const Catalogue::TransportCatalogue& db_;
+		renderer::MapRenderer& renderer_;
+	};
 
 }
