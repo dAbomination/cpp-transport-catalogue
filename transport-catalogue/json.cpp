@@ -377,19 +377,19 @@ namespace json {
 		return root_;
 	}
 
-	void PrintNode(const Node& node, const PrintContext& ctx) {        
-		std::visit(
-			[&ctx](const auto& value) { PrintValue(value, ctx); },
-			node.GetValue());
-	}
-
 	Document Load(istream& input) {
-		return Document( LoadNode(input) );
+		return Document(LoadNode(input));
 	}
 
 	void Print(const Document& doc, std::ostream& output) {
-		PrintContext ctx{ output };        
-		PrintNode(doc.GetRoot(), ctx);         
+		PrintContext ctx{ output };
+		PrintNode(doc.GetRoot(), ctx);
+	}
+
+	void PrintNode(const Node& node, const PrintContext& ctx) {		
+		std::visit(
+			[&ctx](const auto& value) { PrintValue(value, ctx.Indented()); },
+			node.GetValue());
 	}
 
 	// Перегрузка функции PrintValue для вывода значений null
@@ -400,22 +400,26 @@ namespace json {
 	void PrintValue(json::Array data, const PrintContext& ctx) {        
 		ctx.out << "[" << std::endl;
 
-		for (auto it = data.begin(); it != data.end(); ++it) {             
+		for (auto it = data.begin(); it != data.end(); ++it) {     
+			ctx.PrintIndent();
+
 			PrintNode(*it, ctx);
 			if (it != --data.end()) {
 				ctx.out << ",";
 			}
 			ctx.out << std::endl;
 		}
-		
+
+		ctx.Unindented().PrintIndent();
 		ctx.out << "]";
 	}
 
-	void PrintValue(json::Dict data, const PrintContext& ctx) {        
+	void PrintValue(json::Dict data, const PrintContext& ctx) {
 		ctx.out << "{" << std::endl;
 
 		for (auto it = data.begin(); it != data.end(); ++it) {  
-			
+			ctx.PrintIndent();
+
 			PrintNode(it->first, ctx);
 			ctx.out << ": ";
 			PrintNode(it->second, ctx);
@@ -424,7 +428,8 @@ namespace json {
 			}
 			ctx.out << std::endl;
 		}
-		
+
+		ctx.Unindented().PrintIndent();
 		ctx.out << "}";
 	}
 
@@ -487,5 +492,9 @@ namespace json {
 
 	PrintContext PrintContext::Indented() const {
 		return { out, indent_step, indent_step + indent };
+	}
+
+	PrintContext PrintContext::Unindented() const {
+		return { out, indent_step, indent - indent_step };
 	}
 }  // namespace json

@@ -29,6 +29,8 @@ namespace json {
 
 		// Возвращает новый контекст вывода с увеличенным смещением
 		PrintContext Indented() const;
+
+		PrintContext Unindented() const;
 	};   
 
 	class Node {
