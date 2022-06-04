@@ -2,6 +2,32 @@
 
 namespace JSONReader {
 	
+	StopInputRequest::StopInputRequest(std::string_view stop_name, double latitude, double longitude)
+		: name_(stop_name), latitude_(latitude), longitude_(longitude) {
+	}
+
+	StopToStopDistanceInputRequest::StopToStopDistanceInputRequest(std::string_view stop_name1, std::string_view stop_name2, int dist)
+		: stop1_(stop_name1), stop2_(stop_name2), distance_(dist) {
+	}
+
+	BusInputRequest::BusInputRequest(std::string_view bus_name, std::vector<std::string_view> stops, bool is_circular)
+		: bus_name_(bus_name), stops_(stops), is_circular_(is_circular) {
+	}
+
+	StopOutputRequest::StopOutputRequest(int request_id, std::string_view stop_name)
+		: request_id_(request_id), stop_name_(stop_name) {
+	}
+
+	BusOutputRequest::BusOutputRequest(int request_id, std::string_view bus_name)
+		: request_id_(request_id), bus_name_(bus_name) {
+	}
+
+	MapOutputRequest::MapOutputRequest(int request_id)
+		: request_id_(request_id) {
+	}
+
+	// --------------------------------------------------
+
 	JSONLoader::JSONLoader(Catalogue::TransportCatalogue& catalogue)
 		: catalogue_(catalogue) {
 	}

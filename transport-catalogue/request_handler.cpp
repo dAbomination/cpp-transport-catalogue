@@ -35,7 +35,7 @@ namespace RqstHandler {
 	void RequestHandler::ExecuteOutputRequests(const JSONReader::OutputRequestPool& requests) {
 		for (const auto& req : requests) {
 			// Запрос на поиск остановки
-			if (req.index() == 0) {
+			if (std::holds_alternative<JSONReader::StopOutputRequest>(req)) {
 				// Находим список всех маршрутов проходящих через остановку
 				auto buses = GetBusesByStop(std::get<JSONReader::StopOutputRequest>(req).stop_name_);
 				json::Dict result;
@@ -56,7 +56,7 @@ namespace RqstHandler {
 				requests_result_.push_back(result);
 			}
 			// Запрос на поиск маршрута
-			else if (req.index() == 1) {
+			else if (std::holds_alternative<JSONReader::BusOutputRequest>(req)) {
 				const auto& bus_info = GetBusStat(std::get<JSONReader::BusOutputRequest>(req).bus_name_);
 				json::Dict result;
 
@@ -75,7 +75,7 @@ namespace RqstHandler {
 				requests_result_.push_back(result);
 			}
 			// Запрос на отрисовку карты
-			else if (req.index() == 2) {
+			else if (std::holds_alternative<JSONReader::MapOutputRequest>(req)) {
 				json::Dict result;
 
 				result["request_id"] = std::get<JSONReader::MapOutputRequest>(req).request_id_;

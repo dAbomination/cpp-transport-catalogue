@@ -16,9 +16,7 @@ namespace JSONReader {
 	// —труктура содержаща€ данные запроса на добавление остановки
 	// содержит им€ остановки и еЄ координаты
 	struct StopInputRequest {
-		StopInputRequest(std::string_view stop_name, double latitude, double longitude)
-			: name_(stop_name), latitude_(latitude), longitude_(longitude) {
-		}
+		StopInputRequest(std::string_view stop_name, double latitude, double longitude);
 
 		std::string_view name_;
 		double latitude_;
@@ -28,9 +26,7 @@ namespace JSONReader {
 	// —труктура содержаща€ данные запроса на добавление рассто€ни€ между остановками
 	// содержит им€ двух остановок и рассто€ние между ними
 	struct StopToStopDistanceInputRequest {
-		StopToStopDistanceInputRequest(std::string_view stop_name1, std::string_view stop_name2, int dist)
-			: stop1_(stop_name1), stop2_(stop_name2), distance_(dist) {
-		}
+		StopToStopDistanceInputRequest(std::string_view stop_name1, std::string_view stop_name2, int dist);
 
 		std::string_view stop1_;
 		std::string_view stop2_;
@@ -40,9 +36,7 @@ namespace JSONReader {
 	// —труктура содержаща€ данные запроса на добавление маршрута
 	// содержит им€ маршрута, контейнер с названи€ми остановок и €вл€етс€ ли маршрут кольцевым
 	struct BusInputRequest {
-		BusInputRequest(std::string_view bus_name, std::vector<std::string_view> stops, bool is_circular)
-			: bus_name_(bus_name), stops_(stops), is_circular_(is_circular) {
-		}
+		BusInputRequest(std::string_view bus_name, std::vector<std::string_view> stops, bool is_circular);
 
 		std::string_view bus_name_;
 		std::vector<std::string_view> stops_;
@@ -52,9 +46,7 @@ namespace JSONReader {
 	// —труктура содержаща€ данные запроса на поиск остановки
 	// содержит id запроса и остановки проход€щие через остановку
 	struct StopOutputRequest {
-		StopOutputRequest(int request_id, std::string_view stop_name)
-			: request_id_(request_id), stop_name_(stop_name) {
-		}
+		StopOutputRequest(int request_id, std::string_view stop_name);
 
 		int request_id_;
 		std::string_view stop_name_;
@@ -63,9 +55,7 @@ namespace JSONReader {
 	// —труктура содержаща€ данные запроса на поиск маршрута
 	// содержит им€ маршрута, контейнер с названи€ми остановок и €вл€етс€ ли маршрут кольцевым
 	struct BusOutputRequest {
-		BusOutputRequest(int request_id, std::string_view bus_name)
-			: request_id_(request_id), bus_name_(bus_name) {
-		}
+		BusOutputRequest(int request_id, std::string_view bus_name);
 
 		int request_id_;
 		std::string_view bus_name_;
@@ -73,9 +63,7 @@ namespace JSONReader {
 
 	// —труктура содержаща€ данные запроса на отрисовку карты, содержит только id
 	struct MapOutputRequest {
-		MapOutputRequest(int request_id)
-			: request_id_(request_id) {
-		}
+		MapOutputRequest(int request_id);
 
 		int request_id_;
 	};
