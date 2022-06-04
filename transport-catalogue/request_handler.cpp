@@ -17,8 +17,8 @@ namespace RqstHandler {
 		loader.PrintJSON(output, requests_result_);
 	}
 
-	std::optional<Catalogue::BusInfo> RequestHandler::GetBusStat(const std::string_view& bus_name) const {
-		std::optional<Catalogue::BusInfo> result = db_.GetBusInfo(bus_name);		
+	std::optional<domain::BusInfo> RequestHandler::GetBusStat(const std::string_view& bus_name) const {
+		std::optional<domain::BusInfo> result = db_.GetBusInfo(bus_name);
 		// Если остановок в маршруте нет, то такого маршрута не существует
 		if (result->stop_num_ == 0) {
 			return std::nullopt;
@@ -28,7 +28,7 @@ namespace RqstHandler {
 		}		
 	}
 
-	const Catalogue::StopInfo* RequestHandler::GetBusesByStop(const std::string_view& stop_name) const {
+	const domain::StopInfo* RequestHandler::GetBusesByStop(const std::string_view& stop_name) const {
 		return db_.GetStopInfo(stop_name);
 	}
 
@@ -112,7 +112,7 @@ namespace RqstHandler {
 		std::vector<svg::Text> bus_text_names;		
 		std::vector<svg::Text> stop_text_names;
 		// Сразу сортирует в лексикографическом порядке
-		std::set<const Catalogue::Stop*, Catalogue::cmp> stops_symbol_to_draw;
+		std::set<const domain::Stop*, domain::cmp> stops_symbol_to_draw;
 		
 		int color_number = 0;
 

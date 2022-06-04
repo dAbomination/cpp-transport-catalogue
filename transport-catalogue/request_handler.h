@@ -21,10 +21,10 @@ namespace RqstHandler {
 		void PrintToJSON(std::ostream& output);
 
 		// Возвращает информацию о маршруте (запрос Bus)
-		std::optional<Catalogue::BusInfo> GetBusStat(const std::string_view& bus_name) const;
+		std::optional<domain::BusInfo> GetBusStat(const std::string_view& bus_name) const;
 
 		// Возвращает маршруты, проходящие через остановку
-		const Catalogue::StopInfo* GetBusesByStop(const std::string_view& stop_name) const;
+		const domain::StopInfo* GetBusesByStop(const std::string_view& stop_name) const;
 
 		// Отрисовывает карту маршрутов в формате svg
 		svg::Document RenderMap();
