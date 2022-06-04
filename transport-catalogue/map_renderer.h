@@ -60,13 +60,9 @@ namespace renderer {
 		std::vector<svg::Color> color_palette_;
 	};
 
-	class MapRenderer {
+	class MapRenderer : public SphereProjector{
 	public: 
-        // Устанаваливает настройки отрисовки
-        void SetSettings(RenderSettings&& settings);
-
-        // Метод создаёт объект типа SphereProjector
-        void InitializeSphereProjector(const std::vector<geo::Coordinates>& geo_coords);
+        MapRenderer(RenderSettings settings, const std::vector<geo::Coordinates>& coords);        
 
         // Создаёт ломанную линию с заданными координатами, в соответствии с настройками и цветом color
         svg::Polyline AddPolyLine(const std::vector<svg::Point>& points, svg::Color color);              
@@ -79,17 +75,10 @@ namespace renderer {
         svg::Text AddStopNameText(svg::Point point, std::string_view text);
         svg::Text AddSubstrateStopNameText(svg::Point point, std::string_view text);
 
-        // Возвращает Point соответствующий заданным координатам
-        svg::Point GetPoint(geo::Coordinates coord);
-
         svg::Color GetColor(int num);
 
 	private:
-        RenderSettings render_settings_;        
-        std::unique_ptr<SphereProjector> sphere_projector = nullptr;
-
-        // Создаёт текст с именем остановки и подложку для этого текста
-        
+        RenderSettings render_settings_;                
 	};
 	
 

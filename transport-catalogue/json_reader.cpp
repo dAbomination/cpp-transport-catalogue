@@ -1,9 +1,9 @@
 #include "json_reader.h"
 
 namespace JSONReader {
-
-	JSONLoader::JSONLoader(Catalogue::TransportCatalogue& catalogue, RqtHandler::RequestHandler& request_handler)
-		: catalogue_(catalogue), request_handler_(request_handler) {
+	
+	JSONLoader::JSONLoader(Catalogue::TransportCatalogue& catalogue)
+		: catalogue_(catalogue) {
 	}
 
 	InputRequestPool JSONLoader::ParseInputRequests(const json::Array& data) {
@@ -35,8 +35,8 @@ namespace JSONReader {
 					}
 				}
 			}
-			// Так как видов запроса в JSON файле может быть всего 2, то тогда это запрос на добавление маршрута
-			else {
+			// Второй вид запроса в JSON файле - запрос на добавление маршрута
+			else if(request.AsMap().at("type").AsString() == "Bus") {
 				std::string_view name = request.AsMap().at("name").AsString();
 				bool is_circle = request.AsMap().at("is_roundtrip").AsBool();
 
@@ -53,7 +53,7 @@ namespace JSONReader {
 
 				// Новый запрос на добавление маршрута
 				input_requests.push_back(BusInputRequest(name, stops, is_circle));
-			}
+			}			
 		}
 
 		// Сортируем массив запросов по индексу типа variant, т.о. вначале идут запросы на добавление остановок
@@ -86,10 +86,12 @@ namespace JSONReader {
 		}
 	}
 
-	OutputRequestPool JSONLoader::ParseOutputRequests(const json::Array& data) {
+	OutputRequestPool JSONLoader::ParseOutputRequests() {
+		const json::Array& stat_requests = json_data_->GetRoot().AsMap().at("stat_requests").AsArray();
+
 		OutputRequestPool output_requests;
 
-		for (const json::Node& request : data) {
+		for (const json::Node& request : stat_requests) {
 			// Запрос на поиск маршрута
 			if (request.AsMap().at("type").AsString() == "Bus") {
 				int id = request.AsMap().at("id").AsInt();
@@ -98,63 +100,22 @@ namespace JSONReader {
 				output_requests.push_back(BusOutputRequest(id, name));
 			}
 			// Запрос на поиск остановки
-			else {
+			else if (request.AsMap().at("type").AsString() == "Stop") {
 				int id = request.AsMap().at("id").AsInt();
 				std::string_view name = request.AsMap().at("name").AsString();
 
 				output_requests.push_back(StopOutputRequest(id, name));
 			}
+			// Третий тип запроса - на отрисовку карты
+			else if (request.AsMap().at("type").AsString() == "Map") {
+				int id = request.AsMap().at("id").AsInt();
+
+				output_requests.push_back(MapOutputRequest(id));
+			}
 		}
 
 		return output_requests;
-	}
-
-	void JSONLoader::ExecuteOutputRequests(const OutputRequestPool& requests) {
-		
-		for (const auto& req : requests) {
-			// Запрос на поиск остановки
-			if (req.index() == 0) {
-				// Находим список всех маршрутов проходящих через остановку
-				auto buses = request_handler_.GetBusesByStop(std::get<StopOutputRequest>(req).stop_name_);
-				json::Dict result;				
-
-				result["request_id"] = std::get<StopOutputRequest>(req).request_id_;
-				// Если контейнер пуст, то такой остановки нет
-				if (buses) {	
-					json::Array ar;
-					for (const auto& bus : *buses) {
-						ar.push_back(std::string(bus));
-					}
-					result["buses"] = ar;
-				}
-				else {
-					result["error_message"] = std::string("not found");
-				}
-
-				requests_result_.push_back(result);
-			}
-			// Запрос на поиск маршрута
-			else if (req.index() == 1) {
-				const auto& bus_info = request_handler_.GetBusStat(std::get<BusOutputRequest>(req).bus_name_);
-				json::Dict result;
-
-				// Добавляем данные иаршрута
-				result["request_id"] = std::get<BusOutputRequest>(req).request_id_;	
-				if (bus_info.has_value()) {
-					result["curvature"] = bus_info->curvature_;
-					result["route_length"] = bus_info->real_distance_;
-					result["stop_count"] = bus_info->stop_num_;
-					result["unique_stop_count"] = static_cast<int>(bus_info->unique_stop_num_);
-				}				
-				else {
-					result["error_message"] = std::string("not found");
-				}
-
-				requests_result_.push_back(result);
-			}
-		}
-
-	}
+	}	
 
 	svg::Color JSONLoader::ParseColor(const json::Node& color_node) {
 		if (color_node.IsString()) {
@@ -175,67 +136,59 @@ namespace JSONReader {
 		}
 	}
 
-	void JSONLoader::ParseRenderSettings(const json::Dict& data) {
+	renderer::RenderSettings JSONLoader::ParseRenderSettings() {
+		const json::Dict& render_data = json_data_->GetRoot().AsMap().at("render_settings").AsMap();
+
 		renderer::RenderSettings render_settings;
 		
-		render_settings.width_ = data.at("width").AsDouble();
-		render_settings.height_ = data.at("height").AsDouble();
-		render_settings.padding_ = data.at("padding").AsDouble();
-		render_settings.line_width_ = data.at("line_width").AsDouble();
-		render_settings.stop_radius_ = data.at("stop_radius").AsDouble();
-		render_settings.bus_label_font_size_ = data.at("bus_label_font_size").AsInt();
+		render_settings.width_ = render_data.at("width").AsDouble();
+		render_settings.height_ = render_data.at("height").AsDouble();
+		render_settings.padding_ = render_data.at("padding").AsDouble();
+		render_settings.line_width_ = render_data.at("line_width").AsDouble();
+		render_settings.stop_radius_ = render_data.at("stop_radius").AsDouble();
+		render_settings.bus_label_font_size_ = render_data.at("bus_label_font_size").AsInt();
 		
 		render_settings.bus_label_offset_ = { 
-			data.at("bus_label_offset").AsArray()[0].AsDouble(), 
-			data.at("bus_label_offset").AsArray()[1].AsDouble()};
+			render_data.at("bus_label_offset").AsArray()[0].AsDouble(),
+			render_data.at("bus_label_offset").AsArray()[1].AsDouble()};
 		
-		render_settings.stop_label_font_size_ = data.at("stop_label_font_size").AsInt();
+		render_settings.stop_label_font_size_ = render_data.at("stop_label_font_size").AsInt();
 
 		render_settings.stop_label_offset_ = {
-			data.at("stop_label_offset").AsArray()[0].AsDouble(),
-			data.at("stop_label_offset").AsArray()[1].AsDouble() };
+			render_data.at("stop_label_offset").AsArray()[0].AsDouble(),
+			render_data.at("stop_label_offset").AsArray()[1].AsDouble() };
 		
 		// Считываем цвет, может быть задан строкой, 3 числами int или 3 int + 1 double
 		
-		render_settings.underlayer_color_ = ParseColor(data.at("underlayer_color"));
+		render_settings.underlayer_color_ = ParseColor(render_data.at("underlayer_color"));
 		
-		render_settings.underlayer_width_ = data.at("underlayer_width").AsDouble();
+		render_settings.underlayer_width_ = render_data.at("underlayer_width").AsDouble();
 		// Добавляем все цвета в палитру
-		for (const auto& color : data.at("color_palette").AsArray()) {
+		for (const auto& color : render_data.at("color_palette").AsArray()) {
 			render_settings.color_palette_.push_back(ParseColor(color));
 		}
 
-		request_handler_.SetRenderSettings(std::move(render_settings));
+		return render_settings;
 	}
 
 	void JSONLoader::LoadJSON(std::istream& input) {
-		// Загружаем данные из потока в Document
-		json::Document input_data = json::Load(input);
+		// Загружаем данные из потока в Document		
+		json_data_ = std::make_unique<json::Document>(json::Load(input));
 
 		// Верхнеруовневая структура это словарь, содержащий ключи:
 		// base_requests — массив с описанием автобусных маршрутов и остановок,
 		// stat_requests — массив с запросами к транспортному справочнику.
 		// render_settings - словарь с настройками для визуализации
-
+		
 		// Вначале обрабатываем base_requests, получаем массив всех запросов
-		const json::Array& base_requests = input_data.GetRoot().AsMap().at("base_requests").AsArray();
+		const json::Array& base_requests = json_data_->GetRoot().AsMap().at("base_requests").AsArray();
 		InputRequestPool input_requests = std::move(ParseInputRequests(base_requests));		
 		// Выполняем все полученные запросы
-		ExecuteInputRequests(input_requests);
-
-		// Обрабатываем stat_requests запросы 
-		//const json::Array& stat_requests = input_data.GetRoot().AsMap().at("stat_requests").AsArray();
-		//OutputRequestPool output_requests = std::move(ParseOutputRequests(stat_requests));
-		// Выполняем полученные запросы и формируем массив JSON ответов
-		//ExecuteOutputRequests(output_requests);
-
-		// Обрабатываем render_settings настройки 
-		const json::Dict& render_settings = input_data.GetRoot().AsMap().at("render_settings").AsMap();
-		ParseRenderSettings(render_settings);
+		ExecuteInputRequests(input_requests);		
 	}
 
-	void JSONLoader::PrintJSON(std::ostream& output) {
-		json::Document doc(requests_result_);
+	void JSONLoader::PrintJSON(std::ostream& output, json::Array requests_result) {
+		json::Document doc(requests_result);
 		json::Print(doc, output);
 	}
 

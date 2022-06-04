@@ -1,13 +1,20 @@
 #include "request_handler.h"
 
-namespace RqtHandler {
+namespace RqstHandler {
 
-	RequestHandler::RequestHandler(Catalogue::TransportCatalogue& db, renderer::MapRenderer& renderer)
-		: db_(db), renderer_(renderer) {
+	RequestHandler::RequestHandler(Catalogue::TransportCatalogue& db)
+		: db_(db), loader(db) {
 	}
 
 	void RequestHandler::LoadFromJSON(std::istream& input) {
+		// Добавляем данные в справочник
+		loader.LoadJSON(input);		
+		// Парсим выходные запросы, выполняем их и результат сохраняем в 
+		ExecuteOutputRequests(loader.ParseOutputRequests());		
+	}
 
+	void RequestHandler::PrintToJSON(std::ostream& output) {
+		loader.PrintJSON(output, requests_result_);
 	}
 
 	std::optional<Catalogue::BusInfo> RequestHandler::GetBusStat(const std::string_view& bus_name) const {
@@ -25,35 +32,88 @@ namespace RqtHandler {
 		return db_.GetStopInfo(stop_name);
 	}
 
-	struct cmp {
-		bool operator()(const Catalogue::Stop* a, const Catalogue::Stop* b) const
-		{
-			return std::lexicographical_compare(a->stop_name_.begin(), a->stop_name_.end(), b->stop_name_.begin(), b->stop_name_.end());
-		}
-	};
+	void RequestHandler::ExecuteOutputRequests(const JSONReader::OutputRequestPool& requests) {
+		for (const auto& req : requests) {
+			// Запрос на поиск остановки
+			if (req.index() == 0) {
+				// Находим список всех маршрутов проходящих через остановку
+				auto buses = GetBusesByStop(std::get<JSONReader::StopOutputRequest>(req).stop_name_);
+				json::Dict result;
 
-	svg::Document RequestHandler::RenderMap() const {
+				result["request_id"] = std::get<JSONReader::StopOutputRequest>(req).request_id_;
+				// Если контейнер пуст, то такой остановки нет
+				if (buses) {
+					json::Array ar;
+					for (const auto& bus : *buses) {
+						ar.push_back(std::string(bus));
+					}
+					result["buses"] = ar;
+				}
+				else {
+					result["error_message"] = std::string("not found");
+				}
+
+				requests_result_.push_back(result);
+			}
+			// Запрос на поиск маршрута
+			else if (req.index() == 1) {
+				const auto& bus_info = GetBusStat(std::get<JSONReader::BusOutputRequest>(req).bus_name_);
+				json::Dict result;
+
+				// Добавляем данные иаршрута
+				result["request_id"] = std::get<JSONReader::BusOutputRequest>(req).request_id_;
+				if (bus_info.has_value()) {
+					result["curvature"] = bus_info->curvature_;
+					result["route_length"] = bus_info->real_distance_;
+					result["stop_count"] = bus_info->stop_num_;
+					result["unique_stop_count"] = static_cast<int>(bus_info->unique_stop_num_);
+				}
+				else {
+					result["error_message"] = std::string("not found");
+				}
+
+				requests_result_.push_back(result);
+			}
+			// Запрос на отрисовку карты
+			else if (req.index() == 2) {
+				json::Dict result;
+
+				result["request_id"] = std::get<JSONReader::MapOutputRequest>(req).request_id_;
+
+				std::ostringstream output_map_data;
+				RenderMap().Render(output_map_data);
+				result["map"] = output_map_data.str();
+
+				requests_result_.push_back(result);
+			}
+		}
+	}	
+
+	svg::Document RequestHandler::RenderMap() {		
+		
 		// Получаем имя всех существующих маршрутов в справочнике
 		const std::set<std::string_view>& buses = db_.GetBuses();
 		std::vector<geo::Coordinates> geo_coords;
 		
 		for (const auto& bus : buses) {
-			const auto bus_search_result = db_.FindBus(bus);
-			
+			const auto bus_search_result = db_.FindBus(bus);			
 			for (const auto stop : bus_search_result->stops_) {
 				// Добавляем в контейнер координаты каждой остановки, которая входит в данный маршрут				
 				geo_coords.push_back(stop->stop_coordinates_);				
 			}
-		}
-		
-		renderer_.InitializeSphereProjector(geo_coords);			
+		}			
+
+		// Создаём объект MapRenderer для отрисовки карты
+		renderer::MapRenderer renderer_(std::move(loader.ParseRenderSettings()), geo_coords);
+						
 		svg::Document doc;
 
+		// Контейнеры для отрисовки в необходимой последовательности 
 		std::vector<svg::Text> bus_text_names;		
 		std::vector<svg::Text> stop_text_names;
-
-		std::set<const Catalogue::Stop*, cmp> stops_symbol_to_draw;
-
+		// Сразу сортирует в лексикографическом порядке
+		std::set<const Catalogue::Stop*, Catalogue::cmp> stops_symbol_to_draw;
+		
 		int color_number = 0;
 
 		for (const auto& bus : buses) {
@@ -72,43 +132,43 @@ namespace RqtHandler {
 			
 			for (const auto stop : bus_search_result->stops_) {
 				// Добавляем в контейнер координаты каждой остановки, которая входит в данный маршрут
-				points.push_back( renderer_.GetPoint(stop->stop_coordinates_));				
+				points.push_back( renderer_(stop->stop_coordinates_));				
 				// Добавляем остановки в set, получая отсортированные остановки в лексеграфическом порядке
 				stops_symbol_to_draw.insert(stop);
 
 				stop_text_names.push_back(renderer_.AddSubstrateStopNameText(
-					renderer_.GetPoint(stop->stop_coordinates_),
+					renderer_(stop->stop_coordinates_),
 					stop->stop_name_));
 				stop_text_names.push_back(renderer_.AddStopNameText(
-					renderer_.GetPoint(stop->stop_coordinates_),
+					renderer_(stop->stop_coordinates_),
 					stop->stop_name_));
 			}
 			// Если маршрут круговой необходимо добавить ещё координаты первой остановки,
 			// если не кольцевой то необходимо нарисовать второй раз линии в обратном направлении
 			if (bus_search_result->is_circular_) {
-				points.push_back( renderer_.GetPoint(bus_search_result->stops_[0]->stop_coordinates_));
+				points.push_back( renderer_(bus_search_result->stops_[0]->stop_coordinates_));
 			}
 			else {				
 				points.insert(points.end(), points.rbegin() + 1, points.rend());
 			}
-
+			// Добавляем ломанную линию состоящую из точек текущего маршрута
 			doc.Add(renderer_.AddPolyLine(points, renderer_.GetColor(color_number)));
-			// Добавляем название маршрута на холст, вначале подложку потом сам текст
-			
+
+			// Добавляем название маршрута на холст, вначале подложку потом сам текст			
 			bus_text_names.push_back(renderer_.AddSubstrateBusNameText(
-				renderer_.GetPoint(bus_search_result->stops_.front()->stop_coordinates_),
+				renderer_(bus_search_result->stops_.front()->stop_coordinates_),
 				bus_search_result->bus_name_));
 			bus_text_names.push_back(renderer_.AddBusNameText(
-				renderer_.GetPoint(bus_search_result->stops_.front()->stop_coordinates_),
+				renderer_(bus_search_result->stops_.front()->stop_coordinates_),
 				bus_search_result->bus_name_,
 				renderer_.GetColor(color_number)));
 
 			if (!bus_search_result->is_circular_ && bus_search_result->stops_.front() != bus_search_result->stops_.back()) {
 				bus_text_names.push_back(renderer_.AddSubstrateBusNameText(
-					renderer_.GetPoint(bus_search_result->stops_.back()->stop_coordinates_),
+					renderer_(bus_search_result->stops_.back()->stop_coordinates_),
 					bus_search_result->bus_name_));
 				bus_text_names.push_back(renderer_.AddBusNameText(
-					renderer_.GetPoint(bus_search_result->stops_.back()->stop_coordinates_),
+					renderer_(bus_search_result->stops_.back()->stop_coordinates_),
 					bus_search_result->bus_name_,
 					renderer_.GetColor(color_number)));
 			}
@@ -116,29 +176,23 @@ namespace RqtHandler {
 			++color_number;			
 		}		
 
+		// Так как первый слой отрисовки - ломанные линии, уже были добавлены
+		// Добавляем второй слой отрисовки - имена маршрутов
 		for (auto& name : bus_text_names) {
 			doc.Add(name);
 		}
-
+		// Третий слой графики - симолы остановок
 		for (const auto& stop : stops_symbol_to_draw) {
-			doc.Add(renderer_.AddStopSymbol(renderer_.GetPoint(stop->stop_coordinates_)));
+			doc.Add(renderer_.AddStopSymbol(renderer_(stop->stop_coordinates_)));
 		}		
-
+		// Четвертый слой графики - имена остановок
 		for (const auto& stop : stops_symbol_to_draw) {			
-			doc.Add(renderer_.AddSubstrateStopNameText(renderer_.GetPoint(stop->stop_coordinates_),
+			doc.Add(renderer_.AddSubstrateStopNameText(renderer_(stop->stop_coordinates_),
 				stop->stop_name_));
-			doc.Add(renderer_.AddStopNameText(renderer_.GetPoint(stop->stop_coordinates_),
+			doc.Add(renderer_.AddStopNameText(renderer_(stop->stop_coordinates_),
 				stop->stop_name_));
 		}
-
-		/*for (auto& name : stop_text_names) {
-			doc.Add(name);
-		}*/
 		
 		return doc;
-	}
-
-	void RequestHandler::SetRenderSettings(renderer::RenderSettings settings) {
-		renderer_.SetSettings(std::move(settings));
 	}
 }

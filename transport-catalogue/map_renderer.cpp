@@ -16,17 +16,10 @@ namespace renderer {
 	}
 
 	// -------------------- MapRenderer -----------------------------
-	void MapRenderer::SetSettings(RenderSettings&& settings) {
-		render_settings_ = std::move(settings);
-	}
-
-	void MapRenderer::InitializeSphereProjector(const std::vector<geo::Coordinates>& geo_coords){
-
-		sphere_projector = std::make_unique<SphereProjector>(geo_coords.begin(),
-			geo_coords.end(),
-			render_settings_.width_,
-			render_settings_.height_,
-			render_settings_.padding_);				
+	MapRenderer::MapRenderer(RenderSettings settings, const std::vector<geo::Coordinates>& coords)
+		: SphereProjector(coords.begin(), coords.end(),
+			settings.width_, settings.height_, settings.padding_),
+		render_settings_(settings) {
 	}
 
 	svg::Polyline MapRenderer::AddPolyLine(const std::vector<svg::Point>& points, svg::Color color) {
@@ -115,10 +108,6 @@ namespace renderer {
 		substrate_text.SetStrokeLineCap(svg::StrokeLineCap::ROUND);
 
 		return substrate_text;
-	}
-
-	svg::Point MapRenderer::GetPoint(geo::Coordinates coord) {
-		return (*sphere_projector)(coord);
 	}
 
 	svg::Color MapRenderer::GetColor(int num) {

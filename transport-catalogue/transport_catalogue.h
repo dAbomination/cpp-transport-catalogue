@@ -37,6 +37,11 @@ namespace Catalogue {
 		double length_geo_ = 0;
 	};
 
+	// Оператор сравнения для двух остановок в лексикографической порядке
+	struct cmp {
+		bool operator()(const Catalogue::Stop* a, const Catalogue::Stop* b) const;
+	};
+
 	// Контейнер с именами маршрутов, проходящих через остановку
 	using StopInfo = std::set<std::string_view>;
 

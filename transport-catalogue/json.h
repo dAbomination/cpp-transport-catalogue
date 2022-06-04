@@ -10,16 +10,6 @@ namespace json {
 
 	class Node;
 	
-	enum class NodeType {
-		NULLPTR,
-		INT,
-		DOUBLE,
-		BOOL,
-		STRING,
-		DICT,
-		ARRAY
-	};
-
 	using Dict = std::map<std::string, Node>;
 	using Array = std::vector<Node>;       
 

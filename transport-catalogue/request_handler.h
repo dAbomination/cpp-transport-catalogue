@@ -2,19 +2,23 @@
 
 #include "transport_catalogue.h"
 #include "map_renderer.h"
-//#include "json_reader.h"
+#include "json_reader.h"
+
+#include <iostream>
+#include <sstream>
 
 
-namespace RqtHandler {
-
+namespace RqstHandler {
 	// Класс RequestHandler играет роль Фасада, упрощающего взаимодействие JSON reader-а
 	// с другими подсистемами приложения.
 	class RequestHandler {
 	public:
-		RequestHandler(Catalogue::TransportCatalogue& db, renderer::MapRenderer& renderer);
+		RequestHandler(Catalogue::TransportCatalogue& db);
 
 		// Загружает данные из потока и добавляет в справочник
 		void LoadFromJSON(std::istream& input);
+		// Выгружает ответы на запросы в выходной поток в формате JSON
+		void PrintToJSON(std::ostream& output);
 
 		// Возвращает информацию о маршруте (запрос Bus)
 		std::optional<Catalogue::BusInfo> GetBusStat(const std::string_view& bus_name) const;
@@ -22,14 +26,17 @@ namespace RqtHandler {
 		// Возвращает маршруты, проходящие через остановку
 		const Catalogue::StopInfo* GetBusesByStop(const std::string_view& stop_name) const;
 
-		svg::Document RenderMap() const;
+		// Отрисовывает карту маршрутов в формате svg
+		svg::Document RenderMap();
+	private:		
+		Catalogue::TransportCatalogue& db_;		
 
-		void SetRenderSettings(renderer::RenderSettings settings);
-		
-	private:
-		// RequestHandler использует агрегацию объектов "Транспортный Справочник" и "Визуализатор Карты"
-		const Catalogue::TransportCatalogue& db_;
-		renderer::MapRenderer& renderer_;
+		JSONReader::JSONLoader loader;		
+		// Результат выполнения выходных запросов
+		json::Array requests_result_;
+
+		// Выполняет запросы поиска
+		void ExecuteOutputRequests(const JSONReader::OutputRequestPool& requests);
 	};
 
 }

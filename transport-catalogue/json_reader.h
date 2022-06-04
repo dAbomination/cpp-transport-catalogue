@@ -3,7 +3,7 @@
 #include "transport_catalogue.h"
 #include "json.h"
 #include "map_renderer.h"
-#include "request_handler.h"
+//#include "request_handler.h"
 
 #include <vector>
 #include <variant>
@@ -11,8 +11,8 @@
 #include <algorithm>
 
 namespace JSONReader {
-	// ¬ыполн€ет разбор JSON-данных, построенных в ходе парсинга, и формирует массив JSON-ответов;
-	
+	// ¬ыполн€ет разбор JSON-данных, построенных в ходе парсинга, добавл€ет данные в справочник;
+
 	// —труктура содержаща€ данные запроса на добавление остановки
 	// содержит им€ остановки и еЄ координаты
 	struct StopInputRequest {
@@ -47,11 +47,11 @@ namespace JSONReader {
 		std::string_view bus_name_;
 		std::vector<std::string_view> stops_;
 		bool is_circular_;
-	};
+	};	
 
 	// —труктура содержаща€ данные запроса на поиск остановки
 	// содержит id запроса и остановки проход€щие через остановку
-	struct StopOutputRequest {		
+	struct StopOutputRequest {
 		StopOutputRequest(int request_id, std::string_view stop_name)
 			: request_id_(request_id), stop_name_(stop_name) {
 		}
@@ -71,25 +71,39 @@ namespace JSONReader {
 		std::string_view bus_name_;
 	};
 
+	// —труктура содержаща€ данные запроса на отрисовку карты, содержит только id
+	struct MapOutputRequest {
+		MapOutputRequest(int request_id)
+			: request_id_(request_id) {
+		}
+
+		int request_id_;
+	};
+
 	using InputRequest = std::variant<StopInputRequest, StopToStopDistanceInputRequest, BusInputRequest>;
-	using OutputRequest = std::variant<StopOutputRequest, BusOutputRequest>;
+	using OutputRequest = std::variant<StopOutputRequest, BusOutputRequest, MapOutputRequest>;
 
 	using InputRequestPool = std::vector<InputRequest>;
 	using OutputRequestPool = std::vector<OutputRequest>;
 
 	class JSONLoader {
 	public:
-		JSONLoader(Catalogue::TransportCatalogue& catalogue, RqtHandler::RequestHandler& request_handler);
+		JSONLoader(Catalogue::TransportCatalogue& catalogue);
 
 		// —читываем JSON данные из входного потока и добавл€ет данные в catalogue
 		void LoadJSON(std::istream& input);
 
-		void PrintJSON(std::ostream& output);
+		void PrintJSON(std::ostream& output, json::Array requests_result);
+
+		// ѕарсит настройки отрисовки карты
+		renderer::RenderSettings ParseRenderSettings();
+
+		// ѕарсит массив stat_request запросов и возвращает OutputRequestPool 
+		OutputRequestPool ParseOutputRequests();
 	private:
 		Catalogue::TransportCatalogue& catalogue_;
-		RqtHandler::RequestHandler& request_handler_;
-		// –езультат выполнени€ запросов
-		json::Array requests_result_;
+		// ƒанные загруженного документа
+		std::unique_ptr<json::Document> json_data_;
 
 		// ѕарсит нод и возвращает одно из возможных значений svg::Color
 		svg::Color ParseColor(const json::Node& color_node);
@@ -97,14 +111,7 @@ namespace JSONReader {
 		// ѕарсит массив запросов на добавление и возвращает отсортированный InputRequestPool
 		InputRequestPool ParseInputRequests(const json::Array& data);
 		// ¬ыполн€ет запросы на добавление данных в каталог
-		void ExecuteInputRequests(const InputRequestPool& requests) const;
-
-		// ѕарсит массив выходных запросов и возвращает OutputRequestPool
-		OutputRequestPool ParseOutputRequests(const json::Array& data);
-		// ¬ыполн€ет запрсоы на поиск информации
-		void ExecuteOutputRequests(const OutputRequestPool& requests);
-
-		void ParseRenderSettings(const json::Dict& data);
+		void ExecuteInputRequests(const InputRequestPool& requests) const;					
 	};
 
 	

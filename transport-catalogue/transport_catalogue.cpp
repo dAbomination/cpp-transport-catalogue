@@ -2,6 +2,10 @@
 
 namespace Catalogue {
 
+	bool cmp::operator()(const Catalogue::Stop* a, const Catalogue::Stop* b) const {
+		return std::lexicographical_compare(a->stop_name_.begin(), a->stop_name_.end(), b->stop_name_.begin(), b->stop_name_.end());
+	}
+
 	void TransportCatalogue::AddStop(std::string_view stop_name, double latitude, double longitude) {
 		stops_.push_back({ std::string(stop_name), {latitude, longitude} });
 		stopname_to_stop_.insert({ stops_.back().stop_name_, &stops_.back() });

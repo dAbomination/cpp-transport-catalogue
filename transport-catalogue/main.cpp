@@ -12,15 +12,5 @@ int main() {
 	tests::Test();	
 	//std::cout << "OK" << std::endl;
 	
-	Catalogue::TransportCatalogue testcatalogue;
-	renderer::MapRenderer testrenderer;
-
-	RqtHandler::RequestHandler testhandler(testcatalogue, testrenderer);
-	JSONReader::JSONLoader temp_reader(testcatalogue, testhandler);
-			
-	temp_reader.LoadJSON(std::cin);
-	
-	testhandler.RenderMap().Render(std::cout);
-
 	return 0;
 }

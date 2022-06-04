@@ -99,5 +99,8 @@
     ]
   },
   "stat_requests": [
-  ]
+      { "id": 1, "type": "Map" },
+      { "id": 2, "type": "Stop", "name": "Rivierskiy most" },
+      { "id": 3, "type": "Bus", "name": "114" }
+    ]
 }

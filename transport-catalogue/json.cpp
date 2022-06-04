@@ -464,7 +464,7 @@ namespace json {
 	}
 
 	bool Node::operator==(const Node& node) const {
-		return this->value_.index() == this->value_.index();
+		return this->value_.index() == node.value_.index();
 	}
 
 	bool Node::operator!=(const Node& node) const {

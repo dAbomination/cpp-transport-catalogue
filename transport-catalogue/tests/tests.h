@@ -105,20 +105,18 @@ namespace tests {
 	void TestJSONLoad() {
 		std::string dir = "E:/source/VisualStudio/cpp-transport-catalogue/transport-catalogue/test_data/";
 
-		Catalogue::TransportCatalogue testcatalogue;
-		renderer::MapRenderer testrenderer;
-		RqtHandler::RequestHandler testhandler(testcatalogue, testrenderer);
+		Catalogue::TransportCatalogue testcatalogue;		
 
-		JSONReader::JSONLoader temp_reader(testcatalogue, testhandler);
+		RqstHandler::RequestHandler testhandler(testcatalogue);
 				
 		std::ifstream input_data;
-		input_data.open(dir + "test_JSON_2.txt");
+		input_data.open(dir + "test_JSON_3.txt");
 
 		if (input_data.is_open()) {
-			temp_reader.LoadJSON(input_data);
+			testhandler.LoadFromJSON(input_data);
 		}		
-		testhandler.RenderMap().Render(std::cout);
-		//temp_reader.PrintJSON(std::cout);
+		//testhandler.RenderMap().Render(std::cout);
+		testhandler.PrintToJSON(std::cout);
 	}
 
 	void Test() {
