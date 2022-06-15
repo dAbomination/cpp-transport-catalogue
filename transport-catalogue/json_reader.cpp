@@ -41,35 +41,35 @@ namespace JSONReader {
 		// 2. Добавление расстояний между остановками
 		// 3. Добавление маршрутов
 		for (const json::Node& request : data) {
-
+			
 			// Так как request представляет собой словарь, поле type определяет тип запроса
 			// Запрос на добавление остановки
-			if (request.AsMap().at("type").AsString() == "Stop") {
+			if (request.AsDict().at("type").AsString() == "Stop") {
 				// Находим по названиям полей имя и координаты остановки
-				std::string_view name = request.AsMap().at("name").AsString();
-				double latitude = request.AsMap().at("latitude").AsDouble();
-				double longitude = request.AsMap().at("longitude").AsDouble();
+				std::string_view name = request.AsDict().at("name").AsString();
+				double latitude = request.AsDict().at("latitude").AsDouble();
+				double longitude = request.AsDict().at("longitude").AsDouble();
 
 				input_requests.push_back(StopInputRequest(name, latitude, longitude));
 
 				// Если в текущем запросе есть расстояния между остановкам, определяем их тоже
-				if (request.AsMap().count("road_distances")) {
+				if (request.AsDict().count("road_distances")) {
 					// По ключу "road_distances" находится словарь вида [имя остановки, расстояние до неё]
-					for (auto& to_stop_distance : request.AsMap().at("road_distances").AsMap()) {
+					for (auto& to_stop_distance : request.AsDict().at("road_distances").AsDict()) {
 						// Добавляем запрос на расстояние между остановками
 						input_requests.push_back(StopToStopDistanceInputRequest(name, to_stop_distance.first, to_stop_distance.second.AsInt()));
 					}
 				}
 			}
 			// Второй вид запроса в JSON файле - запрос на добавление маршрута
-			else if(request.AsMap().at("type").AsString() == "Bus") {
-				std::string_view name = request.AsMap().at("name").AsString();
-				bool is_circle = request.AsMap().at("is_roundtrip").AsBool();
+			else if(request.AsDict().at("type").AsString() == "Bus") {
+				std::string_view name = request.AsDict().at("name").AsString();
+				bool is_circle = request.AsDict().at("is_roundtrip").AsBool();
 
 				// Контейнер для хранения имён остановок входящих в данный маршрут
 				std::vector<std::string_view> stops;
 				// Набор остановок представляет собой массив с ключем "stops"
-				for (auto& stop : request.AsMap().at("stops").AsArray()) {
+				for (auto& stop : request.AsDict().at("stops").AsArray()) {
 					stops.push_back(stop.AsString());
 				}
 				// Если маршрут кольцевой, то необходимо удалить последнюю остановку, т.к. она дублирует первую
@@ -113,28 +113,28 @@ namespace JSONReader {
 	}
 
 	OutputRequestPool JSONLoader::ParseOutputRequests() {
-		const json::Array& stat_requests = json_data_->GetRoot().AsMap().at("stat_requests").AsArray();
-
+		const json::Array& stat_requests = json_data_->GetRoot().AsDict().at("stat_requests").AsArray();
+		
 		OutputRequestPool output_requests;
 
 		for (const json::Node& request : stat_requests) {
 			// Запрос на поиск маршрута
-			if (request.AsMap().at("type").AsString() == "Bus") {
-				int id = request.AsMap().at("id").AsInt();
-				std::string_view name = request.AsMap().at("name").AsString();
+			if (request.AsDict().at("type").AsString() == "Bus") {
+				int id = request.AsDict().at("id").AsInt();
+				std::string_view name = request.AsDict().at("name").AsString();
 
 				output_requests.push_back(BusOutputRequest(id, name));
 			}
 			// Запрос на поиск остановки
-			else if (request.AsMap().at("type").AsString() == "Stop") {
-				int id = request.AsMap().at("id").AsInt();
-				std::string_view name = request.AsMap().at("name").AsString();
+			else if (request.AsDict().at("type").AsString() == "Stop") {
+				int id = request.AsDict().at("id").AsInt();
+				std::string_view name = request.AsDict().at("name").AsString();
 
 				output_requests.push_back(StopOutputRequest(id, name));
 			}
 			// Третий тип запроса - на отрисовку карты
-			else if (request.AsMap().at("type").AsString() == "Map") {
-				int id = request.AsMap().at("id").AsInt();
+			else if (request.AsDict().at("type").AsString() == "Map") {
+				int id = request.AsDict().at("id").AsInt();
 
 				output_requests.push_back(MapOutputRequest(id));
 			}
@@ -163,8 +163,8 @@ namespace JSONReader {
 	}
 
 	renderer::RenderSettings JSONLoader::ParseRenderSettings() {
-		const json::Dict& render_data = json_data_->GetRoot().AsMap().at("render_settings").AsMap();
-
+		const json::Dict& render_data = json_data_->GetRoot().AsDict().at("render_settings").AsDict();
+		
 		renderer::RenderSettings render_settings;
 		
 		render_settings.width_ = render_data.at("width").AsDouble();
@@ -207,7 +207,7 @@ namespace JSONReader {
 		// render_settings - словарь с настройками для визуализации
 		
 		// Вначале обрабатываем base_requests, получаем массив всех запросов
-		const json::Array& base_requests = json_data_->GetRoot().AsMap().at("base_requests").AsArray();
+		const json::Array& base_requests = json_data_->GetRoot().AsDict().at("base_requests").AsArray();
 		InputRequestPool input_requests = std::move(ParseInputRequests(base_requests));		
 		// Выполняем все полученные запросы
 		ExecuteInputRequests(input_requests);		
