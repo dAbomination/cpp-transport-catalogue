@@ -3,7 +3,7 @@
 #include "transport_catalogue.h"
 #include "map_renderer.h"
 #include "json_reader.h"
-
+#include "json_builder.h"
 
 #include <iostream>
 #include <sstream>
@@ -33,11 +33,12 @@ namespace RqstHandler {
 		Catalogue::TransportCatalogue& db_;		
 
 		JSONReader::JSONLoader loader;		
-		// Результат выполнения выходных запросов
-		json::Array requests_result_;
+		// Результат выполнения выходных запросов		
+		//json::Array requests_result_;
+		json::Builder json_result_;
 
 		// Выполняет запросы поиска
-		void ExecuteOutputRequests(const JSONReader::OutputRequestPool& requests);
+		void ExecuteOutputRequests(const JSONReader::OutputRequestPool& requests);		
 	};
 
 }

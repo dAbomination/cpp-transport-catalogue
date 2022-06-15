@@ -9,12 +9,12 @@ namespace RqstHandler {
 	void RequestHandler::LoadFromJSON(std::istream& input) {
 		// Добавляем данные в справочник
 		loader.LoadJSON(input);		
-		// Парсим выходные запросы, выполняем их и результат сохраняем в 
+		// Парсим выходные запросы, выполняем их и результат сохраняем в json::Builder json_result_
 		ExecuteOutputRequests(loader.ParseOutputRequests());		
 	}
 
-	void RequestHandler::PrintToJSON(std::ostream& output) {
-		loader.PrintJSON(output, requests_result_);
+	void RequestHandler::PrintToJSON(std::ostream& output) {		
+		json::Print(json::Document( json_result_.Build()), output);
 	}
 
 	std::optional<domain::BusInfo> RequestHandler::GetBusStat(const std::string_view& bus_name) const {
@@ -33,6 +33,82 @@ namespace RqstHandler {
 	}
 
 	void RequestHandler::ExecuteOutputRequests(const JSONReader::OutputRequestPool& requests) {
+		// JSON ответ на запросы имеет следующий вид:
+		// Массив из словарей, каждый из которых может быть одним из следующих:
+		// 1. Словарь ответов на запросы поиска остановок, вида:
+		//    ["request_id"] = id зпроса
+		//	  ["buses"] = {маршруты, проходящие через остановку}
+		// 2. Словарь ответов на запросы поиска маршрутов, вида: 
+		//    ["request_id"] = id запроса
+		//    ["curvature"] = отношение реальной длины маршрута к географической
+		//    ["route_length"] = реальная длина маршрута
+		//    ["stop_count"] = общее кол-во остановок
+		//    ["unique_stop_count"] = кол-во уникальных остановок
+		// 3. Словарь - запрос на отрисовку карты в JSON формате, вида:
+		//    ["request_id"] = id запроса
+		//    ["map"] = данные отрисовки в строковом формате
+		json_result_.StartArray();
+
+		for (const auto& req : requests) {
+			// Запрос на поиск остановки
+			if (std::holds_alternative<JSONReader::StopOutputRequest>(req)) {
+				// Находим список всех маршрутов проходящих через остановку
+				auto buses = GetBusesByStop(std::get<JSONReader::StopOutputRequest>(req).stop_name_);
+				json_result_.StartDict();
+
+				json_result_.Key("request_id").Value(std::get<JSONReader::StopOutputRequest>(req).request_id_);
+				// Если контейнер пуст, то такой остановки нет
+				if (buses) {
+					json_result_.Key("buses").StartArray();
+					for (const auto& bus : *buses) {
+						json_result_.Value(std::string(bus));
+					}
+					json_result_.EndArray();
+				}
+				else {
+					json_result_.Key("error_message").Value("not found");
+				}
+
+				json_result_.EndDict();
+			}
+			// Запрос на поиск маршрута
+			else if (std::holds_alternative<JSONReader::BusOutputRequest>(req)) {
+				const auto& bus_info = GetBusStat(std::get<JSONReader::BusOutputRequest>(req).bus_name_);
+				json_result_.StartDict();
+
+				// Добавляем данные иаршрута
+				json_result_.Key("request_id").Value(std::get<JSONReader::BusOutputRequest>(req).request_id_);
+				if (bus_info.has_value()) {
+					json_result_.Key("curvature").Value(bus_info->curvature_);
+					json_result_.Key("route_length").Value(bus_info->real_distance_);
+					json_result_.Key("stop_count").Value(bus_info->stop_num_);
+					json_result_.Key("unique_stop_count").Value(static_cast<int>(bus_info->unique_stop_num_));
+				}
+				else {
+					json_result_.Key("error_message").Value("not found");
+				}
+
+				json_result_.EndDict();
+			}
+			// Запрос на отрисовку карты
+			else if (std::holds_alternative<JSONReader::MapOutputRequest>(req)) {
+				json_result_.StartDict();
+
+				json_result_.Key("request_id").Value(std::get<JSONReader::MapOutputRequest>(req).request_id_);
+
+				std::ostringstream output_map_data;
+				RenderMap().Render(output_map_data);
+				json_result_.Key("map").Value(output_map_data.str());
+
+				json_result_.EndDict();
+			}
+		}
+
+		json_result_.EndArray();
+	}	
+
+	// Старая функция в котором результат заполняется без использования json_builder
+	/*void RequestHandler::ExecuteOutputRequests(const JSONReader::OutputRequestPool& requests) {		
 		for (const auto& req : requests) {
 			// Запрос на поиск остановки
 			if (std::holds_alternative<JSONReader::StopOutputRequest>(req)) {
@@ -87,7 +163,7 @@ namespace RqstHandler {
 				requests_result_.push_back(result);
 			}
 		}
-	}	
+	}*/
 
 	svg::Document RequestHandler::RenderMap() {		
 		
