@@ -139,6 +139,10 @@ namespace json {
 		return !(lhs == rhs);
 	}
 
+	Document::Document(Node root)
+		: root_(std::move(root)) {
+	}
+
 	// --------------------------------------------------------
 
 	namespace {

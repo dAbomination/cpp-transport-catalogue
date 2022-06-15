@@ -5,6 +5,8 @@
 #include <functional>
 #include <optional>
 #include <set>
+#include <string_view>
+#include <string>
 
 #include "geo.h"
 

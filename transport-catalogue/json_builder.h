@@ -19,7 +19,7 @@ namespace json {
 	class Builder {
 	public:
 		friend BaseItemContext;
-		KeyItemContext Key(std::string);
+		KeyItemContext Key(const std::string&);
 		Builder& Value(Node::Value);
 		DictItemContext StartDict();
 		ArrayItemContext StartArray();
@@ -41,7 +41,7 @@ namespace json {
 	public:
 
 		BaseItemContext(Builder& builder);
-		KeyItemContext Key(std::string key);				
+		KeyItemContext Key(const std::string& key);				
 		Builder& Value(Node::Value value);
 		DictItemContext StartDict();
 		ArrayItemContext StartArray();
@@ -73,7 +73,7 @@ namespace json {
 		KeyItemContext(Builder& builder);
 		ValueDictContext Value(Node::Value value);
 
-		KeyItemContext Key(std::string key) = delete;		
+		KeyItemContext Key(const std::string& key) = delete;		
 		Builder& EndDict() = delete;
 		Builder& EndArray() = delete;
 	};
@@ -86,7 +86,7 @@ namespace json {
 		ArrayItemContext(Builder& builder);
 		ValueArrayContext Value(Node::Value value);
 
-		KeyItemContext Key(std::string key) = delete;
+		KeyItemContext Key(const std::string& key) = delete;
 		Builder& EndDict() = delete;		
 	};
 
@@ -111,7 +111,7 @@ namespace json {
 		ValueArrayContext(Builder& builder);
 		ValueArrayContext Value(Node::Value value);
 
-		KeyItemContext Key(std::string key) = delete;
+		KeyItemContext Key(const std::string& key) = delete;
 		Builder& EndDict() = delete;
 	};
 }

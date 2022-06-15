@@ -51,10 +51,7 @@ namespace json {
 
 	class Document {
 	public:
-		explicit Document(Node root)
-			: root_(std::move(root)) {
-		}
-
+		explicit Document(Node root);
 		const Node& GetRoot() const;
 
 	private:

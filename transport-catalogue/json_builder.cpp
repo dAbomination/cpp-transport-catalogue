@@ -8,7 +8,7 @@ namespace json {
 		: builder_(builder) {
 	}
 
-	KeyItemContext BaseItemContext::Key(std::string key) {
+	KeyItemContext BaseItemContext::Key(const std::string& key) {
 		return builder_.Key(key);
 	}
 
@@ -65,7 +65,7 @@ namespace json {
 	}
 
 	// ---------------------------------------------
-	KeyItemContext Builder::Key(std::string key) {
+	KeyItemContext Builder::Key(const std::string& key) {
 		// Проверяем что ключ уже не задан
 		if (key_.has_value()) {
 			throw std::logic_error("Key already appointed!");
