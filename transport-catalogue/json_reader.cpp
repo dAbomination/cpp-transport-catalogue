@@ -26,6 +26,10 @@ namespace JSONReader {
 		: request_id_(request_id) {
 	}
 
+	RouteOutputRequest::RouteOutputRequest(int request_id, std::string_view from, std::string_view to)
+		: request_id_(request_id), from_(from), to_(to) {
+	}
+
 	// --------------------------------------------------
 
 	JSONLoader::JSONLoader(Catalogue::TransportCatalogue& catalogue)
@@ -36,7 +40,7 @@ namespace JSONReader {
 		// Вектор с запросами на добавление данных
 		InputRequestPool input_requests;
 
-		// Вначале необходимо разделить запросы на 3 вида:
+		// Вначале необходимо разделить запросы на 4 вида:
 		// 1. Добавление остановок
 		// 2. Добавление расстояний между остановками
 		// 3. Добавление маршрутов
@@ -134,9 +138,15 @@ namespace JSONReader {
 			}
 			// Третий тип запроса - на отрисовку карты
 			else if (request.AsDict().at("type").AsString() == "Map") {
-				int id = request.AsDict().at("id").AsInt();
-
-				output_requests.push_back(MapOutputRequest(id));
+				output_requests.push_back(MapOutputRequest(request.AsDict().at("id").AsInt()));
+			}
+			// Запрос на поиск пути
+			else if (request.AsDict().at("type").AsString() == "Route") {	
+				output_requests.push_back(RouteOutputRequest(
+					request.AsDict().at("id").AsInt(),
+					request.AsDict().at("from").AsString(),
+					request.AsDict().at("to").AsString()
+				));
 			}
 		}
 
@@ -195,6 +205,14 @@ namespace JSONReader {
 		}
 
 		return render_settings;
+	}
+
+	void JSONLoader::ParseRouterSettings() {
+		const json::Dict& routing_settings = json_data_->GetRoot().AsDict().at("routing_settings").AsDict();
+		// bus_wait_time — время ожидания автобуса на остановке, в минутах
+		routing_settings.at("bus_wait_time").AsInt();
+		// bus_velocity — скорость автобуса, в км/ч
+		routing_settings.at("bus_velocity").AsInt();
 	}
 
 	void JSONLoader::LoadJSON(std::istream& input) {

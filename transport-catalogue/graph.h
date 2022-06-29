@@ -26,7 +26,9 @@ namespace graph {
 
     public:
         DirectedWeightedGraph() = default;
+        // Создаёт граф с заданным количеством вершин
         explicit DirectedWeightedGraph(size_t vertex_count);
+        // Добавляет вершину
         EdgeId AddEdge(const Edge<Weight>& edge);
 
         size_t GetVertexCount() const;
@@ -35,6 +37,7 @@ namespace graph {
         IncidentEdgesRange GetIncidentEdges(VertexId vertex) const;
 
     private:
+        // Вектор рёбер
         std::vector<Edge<Weight>> edges_;
         std::vector<IncidenceList> incidence_lists_;
     };

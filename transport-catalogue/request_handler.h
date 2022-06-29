@@ -8,7 +8,6 @@
 #include <iostream>
 #include <sstream>
 
-
 namespace RqstHandler {
 	// Класс RequestHandler играет роль Фасада, упрощающего взаимодействие JSON reader-а
 	// с другими подсистемами приложения.
@@ -34,7 +33,7 @@ namespace RqstHandler {
 
 		JSONReader::JSONLoader loader;		
 		// Результат выполнения выходных запросов		
-		//json::Array requests_result_;
+		// json::Array requests_result_;
 		json::Builder json_result_;
 
 		// Выполняет запросы поиска

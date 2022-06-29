@@ -102,6 +102,10 @@ namespace RqstHandler {
 
 				json_result_.EndDict();
 			}
+			// Запрос на построение маршрута
+			else if (std::holds_alternative<JSONReader::RouteOutputRequest>(req)) {
+				router::Route(db_);
+			}
 		}
 
 		json_result_.EndArray();
@@ -165,8 +169,7 @@ namespace RqstHandler {
 		}
 	}*/
 
-	svg::Document RequestHandler::RenderMap() {		
-		
+	svg::Document RequestHandler::RenderMap() {				
 		// Получаем имя всех существующих маршрутов в справочнике
 		const std::set<std::string_view>& buses = db_.GetBuses();
 		std::vector<geo::Coordinates> geo_coords;
@@ -209,7 +212,7 @@ namespace RqstHandler {
 			for (const auto stop : bus_search_result->stops_) {
 				// Добавляем в контейнер координаты каждой остановки, которая входит в данный маршрут
 				points.push_back( renderer_(stop->stop_coordinates_));				
-				// Добавляем остановки в set, получая отсортированные остановки в лексеграфическом порядке
+				// Добавляем остановки в set, получая отсортированные остановки в лексикографическом порядке
 				stops_symbol_to_draw.insert(stop);
 
 				stop_text_names.push_back(renderer_.AddSubstrateStopNameText(

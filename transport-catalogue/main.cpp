@@ -10,11 +10,11 @@ int main() {
 	tests::Test();	
 	//std::cout << "OK" << std::endl;
 	
-	Catalogue::TransportCatalogue testcatalogue;
+	/*Catalogue::TransportCatalogue testcatalogue;
 	RqstHandler::RequestHandler testhandler(testcatalogue);
 		
 	testhandler.LoadFromJSON(std::cin);		
-	testhandler.PrintToJSON(std::cout);
+	testhandler.PrintToJSON(std::cout);*/
 
 	return 0;
 }

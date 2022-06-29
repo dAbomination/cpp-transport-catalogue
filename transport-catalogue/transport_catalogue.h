@@ -43,6 +43,14 @@ namespace Catalogue {
 
 		// Возвращает все имена всех существующих маршрутов
 		const std::set<std::string_view>& GetBuses() const;
+
+		// 
+		const std::unordered_map<std::string_view, const domain::Stop*>& GetAllStops() const {
+			return stopname_to_stop_;
+		}
+
+		// Возвращает значение реального расстояния от stop1 до stop2, если такого значения нет возвращает nullopt
+		std::optional<double> GetStopsDistance(const domain::Stop* stop1, const domain::Stop* stop2) const;
 	private:
 		struct StopsToDistanceHasher {
 			std::hash<const void*> stop_ptr_hasher_;
@@ -52,6 +60,8 @@ namespace Catalogue {
 
 		std::deque<domain::Stop> stops_;
 		std::deque<domain::Bus> buses_;
+		// Контейнер с именами маршрутов
+		std::set<std::string_view> buses_names_;
 
 		// Имя остановки -> Указатель на объект с описанием данной остановки
 		std::unordered_map<std::string_view, const domain::Stop*> stopname_to_stop_;
@@ -62,12 +72,7 @@ namespace Catalogue {
 		std::unordered_map<const domain::Stop*, std::set<std::string_view>> stop_to_buses_;
 		// Контейнер содержащий реальные расстояние между остановками
 		std::unordered_map<std::pair<const domain::Stop*, const domain::Stop*>, int, StopsToDistanceHasher> stops_to_distance_;
-
-		// Возвращает значение реального расстояния от stop1 до stop2, если такого значения нет возвращает nullopt
-		std::optional<double> GetStopsDistance(const domain::Stop* stop1, const domain::Stop* stop2) const;
-
-		// Контейнер с именами маршрутов
-		std::set<std::string_view> buses_names_;
+				
 	};
 
 }

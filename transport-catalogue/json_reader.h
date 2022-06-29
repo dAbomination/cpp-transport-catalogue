@@ -3,6 +3,7 @@
 #include "transport_catalogue.h"
 #include "json.h"
 #include "map_renderer.h"
+#include "transport_router.h"
 
 #include <vector>
 #include <variant>
@@ -61,6 +62,15 @@ namespace JSONReader {
 	};
 
 	// —труктура содержаща€ данные запроса на отрисовку карты, содержит только id
+	struct RouteOutputRequest {
+		RouteOutputRequest(int request_id, std::string_view from, std::string_view to);
+
+		int request_id_;
+		std::string_view from_;
+		std::string_view to_;
+	};
+
+	// —труктура содержаща€ данные запроса на поиск пути
 	struct MapOutputRequest {
 		MapOutputRequest(int request_id);
 
@@ -68,7 +78,7 @@ namespace JSONReader {
 	};
 
 	using InputRequest = std::variant<StopInputRequest, StopToStopDistanceInputRequest, BusInputRequest>;
-	using OutputRequest = std::variant<StopOutputRequest, BusOutputRequest, MapOutputRequest>;
+	using OutputRequest = std::variant<StopOutputRequest, BusOutputRequest, MapOutputRequest, RouteOutputRequest>;
 
 	using InputRequestPool = std::vector<InputRequest>;
 	using OutputRequestPool = std::vector<OutputRequest>;
@@ -87,6 +97,9 @@ namespace JSONReader {
 
 		// ѕарсит массив stat_request запросов и возвращает OutputRequestPool 
 		OutputRequestPool ParseOutputRequests();
+
+		// ѕарсит настройки дл€ transport_router
+		void ParseRouterSettings();
 	private:
 		Catalogue::TransportCatalogue& catalogue_;
 		// ƒанные загруженного документа
