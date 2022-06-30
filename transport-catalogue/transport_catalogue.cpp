@@ -48,21 +48,21 @@ namespace Catalogue {
 			// Если есть расстояние в прямом направлении т.е. остановка -> след остановка, используем его
 			// если такого нет то должно быть в противоположно направлении остановка <- след остановка
 			
-			if (GetStopsDistance(temp_stops[stop_num], temp_stops[stop_num + 1]).has_value()) {
-				real_distance += GetStopsDistance(temp_stops[stop_num], temp_stops[stop_num + 1]).value();
+			if (GetDistance(temp_stops[stop_num], temp_stops[stop_num + 1]).has_value()) {
+				real_distance += GetDistance(temp_stops[stop_num], temp_stops[stop_num + 1]).value();
 			}
 			else {
-				real_distance += GetStopsDistance(temp_stops[stop_num + 1], temp_stops[stop_num]).value();
+				real_distance += GetDistance(temp_stops[stop_num + 1], temp_stops[stop_num]).value();
 			}
 
 			// Если маршрут некольцевой то необходимо сразу добавлять расстояние между остановками в оба направления
 			// если какое-то из двух расстояний отсутствует, то добавлять удвоенное значение расстояния
 			if (!is_circular) {
-				if (GetStopsDistance(temp_stops[stop_num + 1], temp_stops[stop_num]).has_value()) {
-					real_distance += GetStopsDistance(temp_stops[stop_num + 1], temp_stops[stop_num]).value();
+				if (GetDistance(temp_stops[stop_num + 1], temp_stops[stop_num]).has_value()) {
+					real_distance += GetDistance(temp_stops[stop_num + 1], temp_stops[stop_num]).value();
 				}
 				else {
-					real_distance += GetStopsDistance(temp_stops[stop_num], temp_stops[stop_num + 1]).value();
+					real_distance += GetDistance(temp_stops[stop_num], temp_stops[stop_num + 1]).value();
 				}
 			}
 		}
@@ -70,11 +70,11 @@ namespace Catalogue {
 		if (is_circular) {
 			geo_distance += ComputeDistance(temp_stops.back()->stop_coordinates_, temp_stops.front()->stop_coordinates_);
 
-			if (GetStopsDistance(temp_stops.back(), temp_stops.front()).has_value()) {
-				real_distance += GetStopsDistance(temp_stops.back(), temp_stops.front()).value();
+			if (GetDistance(temp_stops.back(), temp_stops.front()).has_value()) {
+				real_distance += GetDistance(temp_stops.back(), temp_stops.front()).value();
 			}
 			else {
-				real_distance += GetStopsDistance(temp_stops.front(), temp_stops.back()).value();
+				real_distance += GetDistance(temp_stops.front(), temp_stops.back()).value();
 			}
 
 		}
@@ -85,11 +85,11 @@ namespace Catalogue {
 		else {
 			geo_distance *= 2;
 			
-			if (GetStopsDistance(temp_stops.back(), temp_stops.back()).has_value()) {
-				real_distance += GetStopsDistance(temp_stops.back(), temp_stops.back()).value();
+			if (GetDistance(temp_stops.back(), temp_stops.back()).has_value()) {
+				real_distance += GetDistance(temp_stops.back(), temp_stops.back()).value();
 			}
-			if (GetStopsDistance(temp_stops.front(), temp_stops.front()).has_value()) {
-				real_distance += GetStopsDistance(temp_stops.front(), temp_stops.front()).value();
+			if (GetDistance(temp_stops.front(), temp_stops.front()).has_value()) {
+				real_distance += GetDistance(temp_stops.front(), temp_stops.front()).value();
 			}
 		}				
 
@@ -154,11 +154,22 @@ namespace Catalogue {
 		return buses_names_;
 	}
 
-	std::optional<double> TransportCatalogue::GetStopsDistance(const Stop* stop1, const Stop* stop2) const {
+	std::optional<double> TransportCatalogue::GetDistance(const Stop* stop1, const Stop* stop2) const {
+		if (stops_to_distance_.find({ stop1, stop2 }) != stops_to_distance_.end()) {
+			return stops_to_distance_.at({ stop1, stop2 });
+		}		
+		else {
+			return std::nullopt;
+		}
+	}
+
+	double TransportCatalogue::GetStopToStopDistance(const domain::Stop* stop1, const domain::Stop* stop2) const {
 		if (stops_to_distance_.find({ stop1, stop2 }) != stops_to_distance_.end()) {
 			return stops_to_distance_.at({ stop1, stop2 });
 		}
-		else return std::nullopt;
+		else {
+			return stops_to_distance_.at({ stop2, stop1 });
+		}
 	}
 
 	size_t TransportCatalogue::StopsToDistanceHasher::operator()(const std::pair<const Stop*, const Stop*>& data) const

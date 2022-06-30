@@ -110,13 +110,17 @@ namespace tests {
 		RqstHandler::RequestHandler testhandler(testcatalogue);
 				
 		std::ifstream input_data;
-		input_data.open(dir + "test_JSON_1.txt");
+		input_data.open(dir + "json/s12_final_opentest_3.json");
 
 		if (input_data.is_open()) {
 			testhandler.LoadFromJSON(input_data);
 		}		
 		//testhandler.RenderMap().Render(std::cout);
-		testhandler.PrintToJSON(std::cout);
+		std::ofstream output;
+		output.open(dir + "temp.txt");
+
+		//testhandler.PrintToJSON(std::cout);
+		testhandler.PrintToJSON(output);
 	}
 
 	void Test() {

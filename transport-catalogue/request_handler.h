@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <memory>
 
 namespace RqstHandler {
 	// Класс RequestHandler играет роль Фасада, упрощающего взаимодействие JSON reader-а
@@ -29,12 +30,14 @@ namespace RqstHandler {
 		// Отрисовывает карту маршрутов в формате svg
 		svg::Document RenderMap();
 	private:		
-		Catalogue::TransportCatalogue& db_;		
+		Catalogue::TransportCatalogue& db_;
 
 		JSONReader::JSONLoader loader;		
 		// Результат выполнения выходных запросов		
 		// json::Array requests_result_;
 		json::Builder json_result_;
+
+		std::unique_ptr<router::TransportRouter> router_ = nullptr;
 
 		// Выполняет запросы поиска
 		void ExecuteOutputRequests(const JSONReader::OutputRequestPool& requests);		

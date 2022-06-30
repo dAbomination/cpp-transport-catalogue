@@ -207,12 +207,14 @@ namespace JSONReader {
 		return render_settings;
 	}
 
-	void JSONLoader::ParseRouterSettings() {
+	router::TransportRouterSettings JSONLoader::ParseRouterSettings() {
 		const json::Dict& routing_settings = json_data_->GetRoot().AsDict().at("routing_settings").AsDict();
-		// bus_wait_time Ч врем€ ожидани€ автобуса на остановке, в минутах
-		routing_settings.at("bus_wait_time").AsInt();
+		// bus_wait_time Ч врем€ ожидани€ автобуса на остановке, в минутах		
 		// bus_velocity Ч скорость автобуса, в км/ч
-		routing_settings.at("bus_velocity").AsInt();
+		return { 
+			routing_settings.at("bus_wait_time").AsInt(),
+			routing_settings.at("bus_velocity").AsInt()
+		};
 	}
 
 	void JSONLoader::LoadJSON(std::istream& input) {

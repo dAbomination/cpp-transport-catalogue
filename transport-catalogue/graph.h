@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ranges.h"
+#include "domain.h"
 
 #include <cstdlib>
 #include <vector>
@@ -10,11 +11,17 @@ namespace graph {
     using VertexId = size_t;
     using EdgeId = size_t;
 
+    // Указатель на маршрут и кол-во остановок
+    using EdgeBusInfo = std::pair<const domain::Bus*, int>;
+    using EdgeInfo = std::optional<EdgeBusInfo>;
+
     template <typename Weight>
     struct Edge {
         VertexId from;
         VertexId to;
         Weight weight;
+        // Доп. информация о ребре
+        EdgeInfo info;
     };
 
     // Класс, реализующий взвешенный ориентированный граф,

@@ -49,8 +49,8 @@ namespace Catalogue {
 			return stopname_to_stop_;
 		}
 
-		// ¬озвращает значение реального рассто€ни€ от stop1 до stop2, если такого значени€ нет возвращает nullopt
-		std::optional<double> GetStopsDistance(const domain::Stop* stop1, const domain::Stop* stop2) const;
+		// ¬озвращает значение реального рассто€ни€ от stop1 до stop2, если такого значени€ нет возвращает рассто€ние от stop2 до stop 1
+		double GetStopToStopDistance(const domain::Stop* stop1, const domain::Stop* stop2) const;
 	private:
 		struct StopsToDistanceHasher {
 			std::hash<const void*> stop_ptr_hasher_;
@@ -72,7 +72,9 @@ namespace Catalogue {
 		std::unordered_map<const domain::Stop*, std::set<std::string_view>> stop_to_buses_;
 		//  онтейнер содержащий реальные рассто€ние между остановками
 		std::unordered_map<std::pair<const domain::Stop*, const domain::Stop*>, int, StopsToDistanceHasher> stops_to_distance_;
-				
+
+		// ¬озвращает значение реального рассто€ни€ от stop1 до stop2, если такого значени€ нет возвращает nullopt
+		std::optional<double> GetDistance(const domain::Stop* stop1, const domain::Stop* stop2) const;
 	};
 
 }

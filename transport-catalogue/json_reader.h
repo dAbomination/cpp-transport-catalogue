@@ -99,7 +99,7 @@ namespace JSONReader {
 		OutputRequestPool ParseOutputRequests();
 
 		// Парсит настройки для transport_router
-		void ParseRouterSettings();
+		router::TransportRouterSettings ParseRouterSettings();
 	private:
 		Catalogue::TransportCatalogue& catalogue_;
 		// Данные загруженного документа

@@ -9,6 +9,8 @@ namespace RqstHandler {
 	void RequestHandler::LoadFromJSON(std::istream& input) {
 		// Добавляем данные в справочник
 		loader.LoadJSON(input);		
+		// Создаём граф на основе загруженых данных
+		router_ = std::make_unique<router::TransportRouter>(db_, loader.ParseRouterSettings());
 		// Парсим выходные запросы, выполняем их и результат сохраняем в json::Builder json_result_
 		ExecuteOutputRequests(loader.ParseOutputRequests());		
 	}
@@ -93,7 +95,6 @@ namespace RqstHandler {
 			// Запрос на отрисовку карты
 			else if (std::holds_alternative<JSONReader::MapOutputRequest>(req)) {
 				json_result_.StartDict();
-
 				json_result_.Key("request_id").Value(std::get<JSONReader::MapOutputRequest>(req).request_id_);
 
 				std::ostringstream output_map_data;
@@ -104,7 +105,38 @@ namespace RqstHandler {
 			}
 			// Запрос на построение маршрута
 			else if (std::holds_alternative<JSONReader::RouteOutputRequest>(req)) {
-				router::Route(db_);
+				// Строим маршрут
+				const auto result = router_->BuildTransportRoute(std::get<JSONReader::RouteOutputRequest>(req).from_,
+					std::get<JSONReader::RouteOutputRequest>(req).to_);
+
+				json_result_.StartDict();
+				json_result_.Key("request_id").Value(std::get<JSONReader::RouteOutputRequest>(req).request_id_);
+				if (result.has_value()) {
+					json_result_.Key("total_time").Value(result.value().total_time_);
+					json_result_.Key("items").StartArray();
+					for (const auto& point : result.value().route_points) {
+						json_result_.StartDict();
+
+						if (std::holds_alternative<router::RouteWaitInfo>(point)) {
+							json_result_.Key("type").Value("Wait");
+							json_result_.Key("stop_name").Value(std::string(std::get<router::RouteWaitInfo>(point).stop_name));
+							json_result_.Key("time").Value(std::get<router::RouteWaitInfo>(point).time);							
+						}
+						else if (std::holds_alternative<router::RouteBusInfo>(point)) {
+							json_result_.Key("type").Value("Bus");
+							json_result_.Key("bus").Value(std::string(std::get<router::RouteBusInfo>(point).bus_name));
+							json_result_.Key("span_count").Value(std::get<router::RouteBusInfo>(point).span_count);
+							json_result_.Key("time").Value(std::get<router::RouteBusInfo>(point).time);
+						}
+						json_result_.EndDict();
+					}
+					json_result_.EndArray();
+				}
+				else {
+					json_result_.Key("error_message").Value("not found");
+				}
+
+				json_result_.EndDict();
 			}
 		}
 
