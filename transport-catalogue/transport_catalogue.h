@@ -41,13 +41,9 @@ namespace Catalogue {
 		// »щет остановку по имени, возвращает вектор с названи€ми маршрутов, проход€щих через остановку
 		const domain::StopInfo* GetStopInfo(std::string_view stop_name) const;
 
-		// ¬озвращает все имена всех существующих маршрутов
+		// ¬озвращает все имена всех существующих маршрутов/остановок
 		const std::set<std::string_view>& GetBuses() const;
-
-		// 
-		const std::unordered_map<std::string_view, const domain::Stop*>& GetAllStops() const {
-			return stopname_to_stop_;
-		}
+		const std::unordered_map<std::string_view, const domain::Stop*>& GetAllStops() const;
 
 		// ¬озвращает значение реального рассто€ни€ от stop1 до stop2, если такого значени€ нет возвращает рассто€ние от stop2 до stop 1
 		double GetStopToStopDistance(const domain::Stop* stop1, const domain::Stop* stop2) const;

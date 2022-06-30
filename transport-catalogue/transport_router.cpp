@@ -35,7 +35,7 @@ namespace router {
 						edge.info.value().first->bus_name_,
 						edge.info.value().second,
 						edge.weight
-						});
+					});
 				}
 			}
 		}		
@@ -85,6 +85,7 @@ namespace router {
 				double dist_reversed = 0;
 				size_t stop_num_second = stop_num_first + 1;
 
+				// Добавляем рёбра для каждой последующей остановки в маршруте от stop_num_first
 				for (; stop_num_second < bus_search->stops_.size(); ++stop_num_second) {
 					dist += catalogue_.GetStopToStopDistance(bus_search->stops_[stop_num_second - 1], bus_search->stops_[stop_num_second]);
 
@@ -106,7 +107,7 @@ namespace router {
 					}
 
 				}
-				// Кольцеовй и не кольцевой маршруты имеют разное кол-во ребер	
+				// Кольцевой и не кольцевой маршруты имеют разное кол-во ребер	
 				if (bus_search->is_circular_) {
 					// Для кольцевого необходимо добавить расстояние откаждой не первой остановки, до первой остановки
 					if (stop_num_first != 0) {

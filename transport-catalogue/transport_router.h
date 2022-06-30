@@ -2,7 +2,6 @@
 
 #include "graph.h"
 #include "router.h"
-#include "domain.h"
 #include "transport_catalogue.h"
 
 #include <map>
@@ -44,11 +43,12 @@ namespace router {
 
 	private:
 		const Catalogue::TransportCatalogue& catalogue_;
-		// Имя остановки и её id в качестве вершины графа
+		// Имя остановки и её id в качестве вершины графа и наоборот
 		std::map<std::string_view, size_t> stop_to_id_;
 		std::map<size_t, std::string_view> id_to_stop_;
+
 		TransportRouterSettings settings_;
-		// 
+		
 		graph::DirectedWeightedGraph<double> graph_;
 		graph::Router<double> transport_router_;
 

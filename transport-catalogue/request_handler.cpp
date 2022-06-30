@@ -106,14 +106,17 @@ namespace RqstHandler {
 			// Запрос на построение маршрута
 			else if (std::holds_alternative<JSONReader::RouteOutputRequest>(req)) {
 				// Строим маршрут
-				const auto result = router_->BuildTransportRoute(std::get<JSONReader::RouteOutputRequest>(req).from_,
+				const auto result = router_->BuildTransportRoute(
+					std::get<JSONReader::RouteOutputRequest>(req).from_,
 					std::get<JSONReader::RouteOutputRequest>(req).to_);
 
 				json_result_.StartDict();
 				json_result_.Key("request_id").Value(std::get<JSONReader::RouteOutputRequest>(req).request_id_);
+
 				if (result.has_value()) {
 					json_result_.Key("total_time").Value(result.value().total_time_);
 					json_result_.Key("items").StartArray();
+
 					for (const auto& point : result.value().route_points) {
 						json_result_.StartDict();
 
@@ -142,64 +145,6 @@ namespace RqstHandler {
 
 		json_result_.EndArray();
 	}	
-
-	// Старая функция в котором результат заполняется без использования json_builder
-	/*void RequestHandler::ExecuteOutputRequests(const JSONReader::OutputRequestPool& requests) {		
-		for (const auto& req : requests) {
-			// Запрос на поиск остановки
-			if (std::holds_alternative<JSONReader::StopOutputRequest>(req)) {
-				// Находим список всех маршрутов проходящих через остановку
-				auto buses = GetBusesByStop(std::get<JSONReader::StopOutputRequest>(req).stop_name_);
-				json::Dict result;
-
-				result["request_id"] = std::get<JSONReader::StopOutputRequest>(req).request_id_;
-				// Если контейнер пуст, то такой остановки нет
-				if (buses) {
-					json::Array ar;
-					for (const auto& bus : *buses) {
-						ar.push_back(std::string(bus));
-					}
-					result["buses"] = ar;
-				}
-				else {
-					result["error_message"] = std::string("not found");
-				}
-
-				requests_result_.push_back(result);
-			}
-			// Запрос на поиск маршрута
-			else if (std::holds_alternative<JSONReader::BusOutputRequest>(req)) {
-				const auto& bus_info = GetBusStat(std::get<JSONReader::BusOutputRequest>(req).bus_name_);
-				json::Dict result;
-
-				// Добавляем данные иаршрута
-				result["request_id"] = std::get<JSONReader::BusOutputRequest>(req).request_id_;
-				if (bus_info.has_value()) {
-					result["curvature"] = bus_info->curvature_;
-					result["route_length"] = bus_info->real_distance_;
-					result["stop_count"] = bus_info->stop_num_;
-					result["unique_stop_count"] = static_cast<int>(bus_info->unique_stop_num_);
-				}
-				else {
-					result["error_message"] = std::string("not found");
-				}
-
-				requests_result_.push_back(result);
-			}
-			// Запрос на отрисовку карты
-			else if (std::holds_alternative<JSONReader::MapOutputRequest>(req)) {
-				json::Dict result;
-
-				result["request_id"] = std::get<JSONReader::MapOutputRequest>(req).request_id_;
-
-				std::ostringstream output_map_data;
-				RenderMap().Render(output_map_data);
-				result["map"] = output_map_data.str();
-
-				requests_result_.push_back(result);
-			}
-		}
-	}*/
 
 	svg::Document RequestHandler::RenderMap() {				
 		// Получаем имя всех существующих маршрутов в справочнике
