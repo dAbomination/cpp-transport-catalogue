@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package transport_catalogue_serialize;
+
+message Stop{
+	uint32 stop_number_;
+	string stop_name_;
+	double lat;
+	double lng;	
+}
+
+message Bus{
+	string bus_name_;
+	bool is_circular_;
+	repeated uint32 included_stops_;
+}

@@ -251,4 +251,12 @@ namespace RqstHandler {
 		
 		return doc;
 	}
+		
+	void RequestHandler::SerializeData() {
+
+	}
+
+	void RequestHandler::DeserializeData() {
+
+	}
 }

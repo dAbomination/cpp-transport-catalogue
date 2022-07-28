@@ -4,6 +4,7 @@
 #include "map_renderer.h"
 #include "json_reader.h"
 #include "json_builder.h"
+#include "serialization.h"
 
 #include <iostream>
 #include <sstream>
@@ -29,6 +30,10 @@ namespace RqstHandler {
 
 		// Отрисовывает карту маршрутов в формате svg
 		svg::Document RenderMap();
+
+		void SerializeData();
+
+		void DeserializeData();
 	private:		
 		Catalogue::TransportCatalogue& db_;
 

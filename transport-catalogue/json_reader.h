@@ -100,6 +100,9 @@ namespace JSONReader {
 
 		// Парсит настройки для transport_router
 		router::TransportRouterSettings ParseRouterSettings();
+
+		// Парсит настройки сериализации
+		void ParseSerializationSettings();
 	private:
 		Catalogue::TransportCatalogue& catalogue_;
 		// Данные загруженного документа

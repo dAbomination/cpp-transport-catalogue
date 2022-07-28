@@ -217,6 +217,10 @@ namespace JSONReader {
 		};
 	}
 
+	void JSONLoader::ParseSerializationSettings() {
+		json_data_->GetRoot().AsDict().at("file").AsString();
+	}
+
 	void JSONLoader::LoadJSON(std::istream& input) {
 		// Загружаем данные из потока в Document		
 		json_data_ = std::make_unique<json::Document>(json::Load(input));
