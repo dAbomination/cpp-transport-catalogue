@@ -9,6 +9,7 @@
 #include <variant>
 #include <string_view>
 #include <algorithm>
+#include <filesystem>
 
 namespace JSONReader {
 	// ¬ыполн€ет разбор JSON-данных, построенных в ходе парсинга, добавл€ет данные в справочник;
@@ -83,6 +84,12 @@ namespace JSONReader {
 	using InputRequestPool = std::vector<InputRequest>;
 	using OutputRequestPool = std::vector<OutputRequest>;
 
+	using Path = std::filesystem::path;
+
+	struct SerializationSettings {
+		Path file;
+	};
+
 	class JSONLoader {
 	public:
 		JSONLoader(Catalogue::TransportCatalogue& catalogue);
@@ -95,26 +102,24 @@ namespace JSONReader {
 		// ѕарсит настройки отрисовки карты
 		renderer::RenderSettings ParseRenderSettings();
 
+		// ѕарсит массив запросов на добавление и возвращает отсортированный InputRequestPool
+		InputRequestPool ParseInputRequests() const;
+
 		// ѕарсит массив stat_request запросов и возвращает OutputRequestPool 
-		OutputRequestPool ParseOutputRequests();
+		OutputRequestPool ParseOutputRequests() const;
 
 		// ѕарсит настройки дл€ transport_router
 		router::TransportRouterSettings ParseRouterSettings();
 
 		// ѕарсит настройки сериализации
-		void ParseSerializationSettings();
+		SerializationSettings ParseSerializationSettings();
 	private:
 		Catalogue::TransportCatalogue& catalogue_;
 		// ƒанные загруженного документа
 		std::unique_ptr<json::Document> json_data_;
 
 		// ѕарсит нод и возвращает одно из возможных значений svg::Color
-		svg::Color ParseColor(const json::Node& color_node);
-
-		// ѕарсит массив запросов на добавление и возвращает отсортированный InputRequestPool
-		InputRequestPool ParseInputRequests(const json::Array& data);
-		// ¬ыполн€ет запросы на добавление данных в каталог
-		void ExecuteInputRequests(const InputRequestPool& requests) const;					
+		svg::Color ParseColor(const json::Node& color_node);								
 	};
 
 	

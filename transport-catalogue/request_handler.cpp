@@ -6,8 +6,24 @@ namespace RqstHandler {
 		: db_(db), loader(db) {
 	}
 
-	void RequestHandler::LoadFromJSON(std::istream& input) {
-		// Добавляем данные в справочник
+	void RequestHandler::MakeBase(std::istream& input) {
+		// Считываем из потока запросы входных данных
+		loader.LoadJSON(input);
+		// Сериализуем данные запросов
+		Serialize(loader.ParseInputRequests());
+	}
+
+	void RequestHandler::ProcessRequests(std::istream& input, std::ostream& output) {
+		loader.LoadJSON(input);
+		// Считываем данные входных запросов из файла и добавляем их в справочник
+		Deserialize();
+
+		// Считываем из потока выходные запросы и выполняем их
+		ExecuteOutputRequests(loader.ParseOutputRequests());
+		PrintToJSON(output);
+	}
+
+	void RequestHandler::LoadFromJSON(std::istream& input) {		
 		loader.LoadJSON(input);		
 		// Создаём граф на основе загруженых данных
 		router_ = std::make_unique<router::TransportRouter>(db_, loader.ParseRouterSettings());
@@ -32,6 +48,24 @@ namespace RqstHandler {
 
 	const domain::StopInfo* RequestHandler::GetBusesByStop(const std::string_view& stop_name) const {
 		return db_.GetStopInfo(stop_name);
+	}
+
+	void RequestHandler::ExecuteInputRequests(const JSONReader::InputRequestPool& requests) {
+		// Выполняем все запросы на добавление данных в справочник в зависимости от индекса запроса
+		for (const auto& req : requests) {
+			if (std::holds_alternative<JSONReader::StopInputRequest>(req)) {
+				const JSONReader::StopInputRequest& temp_req = std::get<JSONReader::StopInputRequest>(req);
+				db_.AddStop(temp_req.name_, temp_req.latitude_, temp_req.longitude_);
+			}
+			else if (std::holds_alternative<JSONReader::StopToStopDistanceInputRequest>(req)) {
+				const JSONReader::StopToStopDistanceInputRequest& temp_req = std::get<JSONReader::StopToStopDistanceInputRequest>(req);
+				db_.AddStopToStopDistance(temp_req.stop1_, temp_req.stop2_, temp_req.distance_);
+			}
+			else if (std::holds_alternative<JSONReader::BusInputRequest>(req)) {
+				const JSONReader::BusInputRequest& temp_req = std::get<JSONReader::BusInputRequest>(req);
+				db_.AddBus(temp_req.bus_name_, temp_req.stops_, temp_req.is_circular_);
+			}
+		}
 	}
 
 	void RequestHandler::ExecuteOutputRequests(const JSONReader::OutputRequestPool& requests) {
@@ -252,11 +286,18 @@ namespace RqstHandler {
 		return doc;
 	}
 		
-	void RequestHandler::SerializeData() {
+	void RequestHandler::Serialize(const JSONReader::InputRequestPool& requests) {
+		serialization::TransportCatalogueSerializer serializer;
 
+		serializer.SerializeTransportCatalogue(requests, loader.ParseSerializationSettings().file);
 	}
 
-	void RequestHandler::DeserializeData() {
+	void RequestHandler::Deserialize() {
+		serialization::TransportCatalogueSerializer deserializer;
 
+		const auto input_requests = std::move(deserializer.DeserializeTransportCatalogue(loader.ParseSerializationSettings().file));
+
+		ExecuteInputRequests(input_requests);
 	}
-}
+
+} // namespace RqstHandler

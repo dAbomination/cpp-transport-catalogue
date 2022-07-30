@@ -36,7 +36,8 @@ namespace JSONReader {
 		: catalogue_(catalogue) {
 	}
 
-	InputRequestPool JSONLoader::ParseInputRequests(const json::Array& data) {
+	InputRequestPool JSONLoader::ParseInputRequests() const {
+		const json::Array& data = json_data_->GetRoot().AsDict().at("base_requests").AsArray();
 		// Вектор с запросами на добавление данных
 		InputRequestPool input_requests;
 
@@ -98,25 +99,7 @@ namespace JSONReader {
 		return input_requests;
 	}
 
-	void JSONLoader::ExecuteInputRequests(const InputRequestPool& requests) const {
-		// Выполняем все запросы на добавление данных в справочник в зависимости от индекса запроса
-		for (const auto& req : requests) {
-			if (req.index() == 0) {
-				const StopInputRequest& temp_req = std::get<StopInputRequest>(req);
-				catalogue_.AddStop(temp_req.name_, temp_req.latitude_, temp_req.longitude_);
-			}
-			else if (req.index() == 1) {
-				const StopToStopDistanceInputRequest& temp_req = std::get<StopToStopDistanceInputRequest>(req);
-				catalogue_.AddStopToStopDistance(temp_req.stop1_, temp_req.stop2_, temp_req.distance_);
-			}
-			else if (req.index() == 2) {
-				const BusInputRequest& temp_req = std::get<BusInputRequest>(req);
-				catalogue_.AddBus(temp_req.bus_name_, temp_req.stops_, temp_req.is_circular_);
-			}						
-		}
-	}
-
-	OutputRequestPool JSONLoader::ParseOutputRequests() {
+	OutputRequestPool JSONLoader::ParseOutputRequests() const {
 		const json::Array& stat_requests = json_data_->GetRoot().AsDict().at("stat_requests").AsArray();
 		
 		OutputRequestPool output_requests;
@@ -217,24 +200,23 @@ namespace JSONReader {
 		};
 	}
 
-	void JSONLoader::ParseSerializationSettings() {
-		json_data_->GetRoot().AsDict().at("file").AsString();
+	SerializationSettings JSONLoader::ParseSerializationSettings() {
+		const json::Dict& serialization_settings = json_data_->GetRoot().AsDict().at("serialization_settings").AsDict();
+		// Имя файла в который необходимо сохранить сериализованную базу
+		
+		return { serialization_settings.at("file").AsString() };
 	}
 
 	void JSONLoader::LoadJSON(std::istream& input) {
 		// Загружаем данные из потока в Document		
 		json_data_ = std::make_unique<json::Document>(json::Load(input));
 
-		// Верхнеруовневая структура это словарь, содержащий ключи:
+		// Структура верхнего уровня это словарь, содержащий ключи:
 		// base_requests — массив с описанием автобусных маршрутов и остановок,
 		// stat_requests — массив с запросами к транспортному справочнику.
-		// render_settings - словарь с настройками для визуализации
-		
-		// Вначале обрабатываем base_requests, получаем массив всех запросов
-		const json::Array& base_requests = json_data_->GetRoot().AsDict().at("base_requests").AsArray();
-		InputRequestPool input_requests = std::move(ParseInputRequests(base_requests));		
-		// Выполняем все полученные запросы
-		ExecuteInputRequests(input_requests);		
+		// render_settings — словарь с настройками отрисовки карты
+		// routing_settings — словарь настройки поиска пути
+		// serialization_settings — словарь настройки сериализации
 	}
 
 	void JSONLoader::PrintJSON(std::ostream& output, json::Array requests_result) {

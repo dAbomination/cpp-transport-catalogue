@@ -5,17 +5,25 @@
 #include "json_reader.h"
 #include "json_builder.h"
 #include "serialization.h"
+#include "include/transport_catalogue.pb.h"
 
 #include <iostream>
 #include <sstream>
 #include <memory>
 
 namespace RqstHandler {
+	
 	// Класс RequestHandler играет роль Фасада, упрощающего взаимодействие JSON reader-а
 	// с другими подсистемами приложения.
 	class RequestHandler {
 	public:
 		RequestHandler(Catalogue::TransportCatalogue& db);
+
+		// Считывает JSON из потока сериализует данные
+		void MakeBase(std::istream& input);
+		// Считывает запросы из input, десериализует данные справочника
+		// выполняет все запросы и выдаёт JSON ответ в output
+		void ProcessRequests(std::istream& input, std::ostream& output);
 
 		// Загружает данные из потока и добавляет в справочник
 		void LoadFromJSON(std::istream& input);
@@ -31,9 +39,9 @@ namespace RqstHandler {
 		// Отрисовывает карту маршрутов в формате svg
 		svg::Document RenderMap();
 
-		void SerializeData();
+		void Serialize(const JSONReader::InputRequestPool& requests);
 
-		void DeserializeData();
+		void Deserialize();
 	private:		
 		Catalogue::TransportCatalogue& db_;
 
@@ -46,6 +54,12 @@ namespace RqstHandler {
 
 		// Выполняет запросы поиска
 		void ExecuteOutputRequests(const JSONReader::OutputRequestPool& requests);		
+
+		// Выполняет запросы на добавление данных в справочник
+		void ExecuteInputRequests(const JSONReader::InputRequestPool& requests);
+
+		// Вызывает парсер входного потока на входные запросы
+		// Результат работы - контейнер с запросами
 	};
 
-}
+} // namespace RqstHandler

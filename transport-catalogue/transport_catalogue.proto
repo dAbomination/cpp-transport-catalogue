@@ -3,14 +3,26 @@ syntax = "proto3";
 package transport_catalogue_serialize;
 
 message Stop{
-	uint32 stop_number_;
-	string stop_name_;
-	double lat;
-	double lng;	
+	uint32 stop_number_ = 1;
+	string stop_name_ = 2;
+	double lat = 3;
+	double lng = 4;	
 }
 
 message Bus{
-	string bus_name_;
-	bool is_circular_;
-	repeated uint32 included_stops_;
+	string bus_name_ = 1;
+	bool is_circular_ = 2;
+	repeated uint32 included_stops_ = 3;
+}
+
+message StopToStopDistance{
+	uint32 stop1 = 1;
+	uint32 stop2 = 2;
+	double distance = 3;
+}
+
+message TransportCatalogue{
+	repeated Stop stops_ = 1;
+	repeated Bus buses_ = 2;
+	repeated StopToStopDistance distances_= 3;
 }

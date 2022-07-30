@@ -5,6 +5,8 @@
 #include "transport_catalogue.h"
 #include "request_handler.h"
 
+#include "tests/tests.h"
+
 using namespace std::literals;
 
 void PrintUsage(std::ostream& stream = std::cerr) {
@@ -12,6 +14,10 @@ void PrintUsage(std::ostream& stream = std::cerr) {
 }
 
 int main(int argc, char* argv[]) {
+    //-----------Тесты-----------
+    tests::test0();
+    std::cout << "Test OK!" << std::endl;
+    //---------------------------
     if (argc != 2) {
         PrintUsage();
         return 1;
@@ -21,16 +27,18 @@ int main(int argc, char* argv[]) {
     // Программа make_base: создание базы транспортного справочника по запросам base_requests 
     // и её сериализация в файл.
     if (mode == "make_base"sv) {
+        Catalogue::TransportCatalogue catalogue;
+        RqstHandler::RequestHandler handler(catalogue);
 
-        // make base here
-
+        handler.MakeBase(std::cin);        
     }
     // Программа process_requests: десериализация базы из файла и использование её 
     // для ответов на запросы stat_requests.
     else if (mode == "process_requests"sv) {
+        Catalogue::TransportCatalogue catalogue;
+        RqstHandler::RequestHandler handler(catalogue);
 
-        // process requests here
-
+        handler.ProcessRequests(std::cin, std::cout);
     }
     else {
         PrintUsage();
