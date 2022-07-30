@@ -157,7 +157,7 @@ namespace JSONReader {
 
 	renderer::RenderSettings JSONLoader::ParseRenderSettings() {
 		const json::Dict& render_data = json_data_->GetRoot().AsDict().at("render_settings").AsDict();
-		
+
 		renderer::RenderSettings render_settings;
 		
 		render_settings.width_ = render_data.at("width").AsDouble();

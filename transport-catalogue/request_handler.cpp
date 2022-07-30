@@ -10,13 +10,13 @@ namespace RqstHandler {
 		// Считываем из потока запросы входных данных
 		loader.LoadJSON(input);
 		// Сериализуем данные запросов
-		Serialize(loader.ParseInputRequests());
+		Serialize(loader.ParseSerializationSettings().file);
 	}
 
 	void RequestHandler::ProcessRequests(std::istream& input, std::ostream& output) {
 		loader.LoadJSON(input);
 		// Считываем данные входных запросов из файла и добавляем их в справочник
-		Deserialize();
+		Deserialize(loader.ParseSerializationSettings().file);
 
 		// Считываем из потока выходные запросы и выполняем их
 		ExecuteOutputRequests(loader.ParseOutputRequests());
@@ -194,7 +194,7 @@ namespace RqstHandler {
 		}			
 
 		// Создаём объект MapRenderer для отрисовки карты
-		renderer::MapRenderer renderer_(std::move(loader.ParseRenderSettings()), geo_coords);
+		renderer::MapRenderer renderer_(render_settings_, geo_coords);
 						
 		svg::Document doc;
 
@@ -286,17 +286,22 @@ namespace RqstHandler {
 		return doc;
 	}
 		
-	void RequestHandler::Serialize(const JSONReader::InputRequestPool& requests) {
-		serialization::TransportCatalogueSerializer serializer;
+	void RequestHandler::Serialize(Path file) {
+		serialization::TransportCatalogueSerializer serializer(file);
 
-		serializer.SerializeTransportCatalogue(requests, loader.ParseSerializationSettings().file);
+		serializer.SerializeTransportCatalogue(
+			std::move(loader.ParseInputRequests()),
+			std::move(loader.ParseRenderSettings())
+		);
 	}
 
-	void RequestHandler::Deserialize() {
-		serialization::TransportCatalogueSerializer deserializer;
+	void RequestHandler::Deserialize(Path file) {
+		serialization::TransportCatalogueSerializer deserializer(file);
 
-		const auto input_requests = std::move(deserializer.DeserializeTransportCatalogue(loader.ParseSerializationSettings().file));
+		JSONReader::InputRequestPool input_requests;
+		std::tie( input_requests , render_settings_) = std::move(deserializer.DeserializeTransportCatalogue());
 
+		// Добавляем десериализованные данные в справочник
 		ExecuteInputRequests(input_requests);
 	}
 

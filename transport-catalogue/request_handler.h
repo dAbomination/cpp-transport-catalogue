@@ -5,7 +5,6 @@
 #include "json_reader.h"
 #include "json_builder.h"
 #include "serialization.h"
-#include "include/transport_catalogue.pb.h"
 
 #include <iostream>
 #include <sstream>
@@ -13,6 +12,8 @@
 
 namespace RqstHandler {
 	
+	using Path = std::filesystem::path;
+
 	// Класс RequestHandler играет роль Фасада, упрощающего взаимодействие JSON reader-а
 	// с другими подсистемами приложения.
 	class RequestHandler {
@@ -39,18 +40,17 @@ namespace RqstHandler {
 		// Отрисовывает карту маршрутов в формате svg
 		svg::Document RenderMap();
 
-		void Serialize(const JSONReader::InputRequestPool& requests);
+		void Serialize(Path file);
 
-		void Deserialize();
+		void Deserialize(Path file);
 	private:		
 		Catalogue::TransportCatalogue& db_;
-
 		JSONReader::JSONLoader loader;		
 		// Результат выполнения выходных запросов		
 		// json::Array requests_result_;
 		json::Builder json_result_;
-
 		std::unique_ptr<router::TransportRouter> router_ = nullptr;
+		renderer::RenderSettings render_settings_;
 
 		// Выполняет запросы поиска
 		void ExecuteOutputRequests(const JSONReader::OutputRequestPool& requests);		

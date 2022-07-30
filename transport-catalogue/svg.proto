@@ -1,0 +1,27 @@
+syntax = "proto2";
+
+package transport_catalogue_serialize;
+
+message Point{
+	required double x_ = 1;
+	required double y_ = 2;
+}
+
+message Rgb{
+	required uint32 r_ = 1;
+	required uint32 g_ = 2;
+	required uint32 b_ = 3;	
+}
+
+message Rgba{
+	required uint32 r_ = 1;
+	required uint32 g_ = 2;
+	required uint32 b_ = 3;	
+	required double opacity_ = 4;
+}
+
+message Color{
+	optional string string_color_ = 1;
+	optional Rgb rgb_color_ = 2;
+	optional Rgba rgba_color_ = 3;
+}

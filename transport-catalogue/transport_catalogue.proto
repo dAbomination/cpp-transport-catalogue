@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "map_renderer.proto";
+
 package transport_catalogue_serialize;
 
 message Stop{
@@ -25,4 +27,5 @@ message TransportCatalogue{
 	repeated Stop stops_ = 1;
 	repeated Bus buses_ = 2;
 	repeated StopToStopDistance distances_= 3;
+	RenderSettings render_settings_ = 4;
 }
