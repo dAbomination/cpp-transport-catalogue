@@ -8,21 +8,21 @@ namespace serialization {
 
 	void TransportCatalogueSerializer::SerializeTransportCatalogue(
 		const JSONReader::InputRequestPool& requests,
-		const renderer::RenderSettings& settings) {
+		const renderer::RenderSettings& render_settings,
+		const router::TransportRouterSettings& router_settings,
+		const graph::DirectedWeightedGraph<double>& in_graph) {
 
-		catalogue_data.Clear();
-
-		// Контейнер который связывает имя остановки и её номер
-		std::unordered_map<std::string_view, int> stop_name_to_number;
+		catalogue_data_.Clear();
 
 		int stop_number = 0;
+		int bus_number = 0;
 		// Преобразуем все запросы из requests
 		for (const auto& req : requests) {
 			if (std::holds_alternative<JSONReader::StopInputRequest>(req)) {
 				const JSONReader::StopInputRequest& temp_req = std::get<JSONReader::StopInputRequest>(req);
-				stop_name_to_number[temp_req.name_] = stop_number;
+				stop_name_to_number_[temp_req.name_] = stop_number;
 
-				transport_catalogue_serialize::Stop* new_stop = catalogue_data.add_stops_();
+				transport_catalogue_serialize::Stop* new_stop = catalogue_data_.add_stops_();
 
 				new_stop->set_stop_number_(stop_number);
 				new_stop->set_stop_name_(std::string(temp_req.name_));
@@ -34,31 +34,40 @@ namespace serialization {
 			else if (std::holds_alternative<JSONReader::StopToStopDistanceInputRequest>(req)) {
 				const JSONReader::StopToStopDistanceInputRequest& temp_req = std::get<JSONReader::StopToStopDistanceInputRequest>(req);
 
-				transport_catalogue_serialize::StopToStopDistance* new_dist = catalogue_data.add_distances_();
+				transport_catalogue_serialize::StopToStopDistance* new_dist = catalogue_data_.add_distances_();
 				
-				new_dist->set_stop1(stop_name_to_number[temp_req.stop1_]);
-				new_dist->set_stop2(stop_name_to_number[temp_req.stop2_]);
+				new_dist->set_stop1(stop_name_to_number_[temp_req.stop1_]);
+				new_dist->set_stop2(stop_name_to_number_[temp_req.stop2_]);
 				new_dist->set_distance(temp_req.distance_);
 			}
 			else if (std::holds_alternative<JSONReader::BusInputRequest>(req)) {
 				const JSONReader::BusInputRequest& temp_req = std::get<JSONReader::BusInputRequest>(req);
 
-				transport_catalogue_serialize::Bus* new_bus = catalogue_data.add_buses_();
+				transport_catalogue_serialize::Bus* new_bus = catalogue_data_.add_buses_();
 
 				new_bus->set_bus_name_(std::string(temp_req.bus_name_));
 				new_bus->set_is_circular_(temp_req.is_circular_);
-				
+				new_bus->set_bus_number_(bus_number);
+
 				std::for_each(
 					temp_req.stops_.begin(),
 					temp_req.stops_.end(), 
-					[&new_bus, &stop_name_to_number](const auto& stop_name) {
-						new_bus->add_included_stops_(stop_name_to_number[stop_name]);
+					[&new_bus, this](const auto& stop_name) {
+						new_bus->add_included_stops_(stop_name_to_number_[stop_name]);
 					}
 				);
+
+				bus_name_to_number_[temp_req.bus_name_] = bus_number++;
 			}
 		}
 		// Добавляем в catalogue_data настройки отрисовки
-		SerializeRenderSettings(settings);
+		SerializeRenderSettings(render_settings);
+
+		// Добавляем в catalogue_data настройки маршрутизатора
+		SerializeRouterSettings(router_settings);
+
+		// Сериализуем граф
+		SerializeGraph(in_graph);
 
 		// Открываем файл для записи
 		std::ofstream out(file_, std::ios::binary);
@@ -66,26 +75,22 @@ namespace serialization {
 			return;
 		}
 		
-		catalogue_data.SerializeToOstream(&out);
+		catalogue_data_.SerializeToOstream(&out);
 	}
 
 	DeserializedData TransportCatalogueSerializer::DeserializeTransportCatalogue() {
-		catalogue_data.Clear();
-		
-		JSONReader::InputRequestPool result;
-		std::unordered_map<int, std::string_view> number_to_stop_name;
+		catalogue_data_.Clear();		
+		JSONReader::InputRequestPool result;		
 
 		std::ifstream in(file_, std::ios::binary);
-		if (!in.is_open()) {
-			return {};
-		}
+		
 		// Считываем данные из файла
-		catalogue_data.ParseFromIstream(&in);
+		catalogue_data_.ParseFromIstream(&in);
 
 		// Данные остановок
 		int stop_num = 0;
-		for (const auto& stop_data : catalogue_data.stops_()) {
-			number_to_stop_name[stop_num++] = stop_data.stop_name_();			
+		for (const auto& stop_data : catalogue_data_.stops_()) {
+			number_to_stop_name_[stop_num++] = stop_data.stop_name_();			
 
 			result.emplace_back(JSONReader::StopInputRequest(
 				stop_data.stop_name_(),
@@ -94,24 +99,25 @@ namespace serialization {
 			));
 		}
 		// Данные расстояний
-		for (const auto& dist_data : catalogue_data.distances_()) {
+		for (const auto& dist_data : catalogue_data_.distances_()) {
 			
 			result.emplace_back(JSONReader::StopToStopDistanceInputRequest(
-				number_to_stop_name[dist_data.stop1()],
-				number_to_stop_name[dist_data.stop2()],
+				number_to_stop_name_[dist_data.stop1()],
+				number_to_stop_name_[dist_data.stop2()],
 				dist_data.distance()
 			));
 		}
 		// Данные маршрутов
-		for (const auto& bus_data : catalogue_data.buses_()) {
+		for (const auto& bus_data : catalogue_data_.buses_()) {
+			number_to_bus_name_[bus_data.bus_number_()] = bus_data.bus_name_();
 
 			std::vector<std::string_view> stops;
 
 			std::for_each(
 				bus_data.included_stops_().begin(),
 				bus_data.included_stops_().end(),
-				[&stops, &number_to_stop_name](const auto& stops_data) {
-					stops.push_back(number_to_stop_name[stops_data]);
+				[&stops, this](const auto& stops_data) {
+					stops.push_back(number_to_stop_name_[stops_data]);
 				}
 			);
 
@@ -122,7 +128,12 @@ namespace serialization {
 			));
 		}
 
-		return { result, std::move(DeserializeRenderSettings()) };
+		return {
+			result,
+			std::move(DeserializeRenderSettings()),
+			std::move(DeserializeRouterSettings()),
+			std::move(DeserializeGraph())
+		};
 	}
 
 	transport_catalogue_serialize::Color TransportCatalogueSerializer::ConvertToSerializeColor(svg::Color input_color) const {
@@ -212,12 +223,12 @@ namespace serialization {
 			*new_color = ConvertToSerializeColor(temp_color);
 		}		
 			
-		*catalogue_data.mutable_render_settings_() = render_settings;
+		*catalogue_data_.mutable_render_settings_() = render_settings;
 	}
 
 	renderer::RenderSettings TransportCatalogueSerializer::DeserializeRenderSettings() {
 		renderer::RenderSettings render_settings_;
-		const transport_catalogue_serialize::RenderSettings& settings = catalogue_data.render_settings_();
+		const transport_catalogue_serialize::RenderSettings& settings = catalogue_data_.render_settings_();
 
 		render_settings_.width_ = settings.width_();
 		render_settings_.height_ = settings.height_();
@@ -248,4 +259,103 @@ namespace serialization {
 
 		return render_settings_;
 	}
+
+	// Сериализует/десериализует настройки маршрутизатора
+	void TransportCatalogueSerializer::SerializeRouterSettings(const router::TransportRouterSettings& settings) {
+		transport_catalogue_serialize::RouterSettings out_settings;
+
+		out_settings.set_bus_velocity_(settings.bus_velocity_);
+		out_settings.set_bus_wait_time_(settings.bus_wait_time_);
+
+		*catalogue_data_.mutable_router_settings_() = out_settings;
+	}
+
+	router::TransportRouterSettings TransportCatalogueSerializer::DeserializeRouterSettings() {
+		const transport_catalogue_serialize::RouterSettings& in_settings = catalogue_data_.router_settings_();
+		router::TransportRouterSettings out_settings;
+
+		out_settings.bus_velocity_ = in_settings.bus_velocity_();
+		out_settings.bus_wait_time_ = in_settings.bus_wait_time_();
+
+		return out_settings;
+	}
+
+	// Сериализует/десериализует граф транспортного справочника
+	void TransportCatalogueSerializer::SerializeGraph(const graph::DirectedWeightedGraph<double>& in_graph) {
+
+		transport_catalogue_serialize::DirectedWeightedGraph out_graph;
+
+		const auto& edges = in_graph.GetEdges();
+
+		size_t edge_id = 0;
+		for (const auto& edge : edges) {
+			transport_catalogue_serialize::Edge* new_edge = out_graph.add_edges_();
+
+			transport_catalogue_serialize::EdgeBusInfo bus_info;
+			if (edge.info.has_value()) {
+				bus_info.set_stops_count_(edge.info.value().second);
+				bus_info.set_bus_number_(bus_name_to_number_.at(edge.info.value().first));
+				*new_edge->mutable_info_() = bus_info;
+			}
+			
+			new_edge->set_edge_id_(edge_id);
+			new_edge->set_weight_(edge.weight);
+			new_edge->set_from_(edge.from);
+			new_edge->set_to_(edge.to);
+			
+			++edge_id;
+		}
+
+		const auto& vertexex = in_graph.GetVertexes();
+
+		for (int vertex_num = 0; vertex_num < vertexex.size(); ++vertex_num) {
+			transport_catalogue_serialize::Vertex* new_vertex = out_graph.add_incidence_lists_();
+			// Добавляем все связи вершины vertex_num
+			*new_vertex->mutable_edge_id_() = { vertexex[vertex_num].begin(), vertexex[vertex_num].end() };
+			new_vertex->set_vertex_id_(vertex_num);
+		}
+
+ 		*catalogue_data_.mutable_graph_()->mutable_graph_() = out_graph;
+	}
+
+	graph::DirectedWeightedGraph<double> TransportCatalogueSerializer::DeserializeGraph() {
+
+		transport_catalogue_serialize::DirectedWeightedGraph in_graph = catalogue_data_.graph_().graph_();
+		graph::DirectedWeightedGraph<double> out_graph;
+
+		// Собираем все рёбра
+		const auto& edges = in_graph.edges_();
+		auto& new_edges = out_graph.GetEdges();			
+
+		for (const auto& edge : edges) {
+			graph::EdgeInfo bus_info = std::nullopt;
+			if (edge.has_info_()) {
+				
+				bus_info = {
+					number_to_bus_name_.at(edge.info_().bus_number_()),
+					edge.info_().stops_count_() 
+				};
+			}
+			
+			new_edges.push_back({
+				edge.from_(),
+				edge.to_(),
+				edge.weight_(),
+				bus_info
+			});
+		}
+			
+		const auto& vertexes = in_graph.incidence_lists_();
+		auto& new_vertexes = out_graph.GetVertexes();
+		new_vertexes.resize(in_graph.incidence_lists_().size());
+
+		for (const auto& vertex : vertexes) {
+			for (const auto& id : vertex.edge_id_()) {
+				new_vertexes[vertex.vertex_id_()].emplace_back(id);
+			}			
+		}
+
+		return out_graph;
+	}
+
 } // namespace serialization

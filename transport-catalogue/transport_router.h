@@ -38,9 +38,16 @@ namespace router {
 	class TransportRouter {
 	public:
 		explicit TransportRouter(const Catalogue::TransportCatalogue& catalogue, const TransportRouterSettings& settings);
+		// Конструкторя для создания маршрутизатора из готового графа
+		explicit TransportRouter(
+			const Catalogue::TransportCatalogue& catalogue,
+			const TransportRouterSettings& settings,
+			graph::DirectedWeightedGraph<double>&& graph
+		);
 
 		std::optional<RouteData> BuildTransportRoute(std::string_view from, std::string_view to);
 
+		const graph::DirectedWeightedGraph<double> GetGraph() const;
 	private:
 		const Catalogue::TransportCatalogue& catalogue_;
 		// Имя остановки и её id в качестве вершины графа и наоборот

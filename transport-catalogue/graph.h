@@ -12,7 +12,7 @@ namespace graph {
     using EdgeId = size_t;
 
     // Указатель на маршрут и кол-во остановок
-    using EdgeBusInfo = std::pair<const domain::Bus*, int>;
+    using EdgeBusInfo = std::pair<std::string_view, int>;
     using EdgeInfo = std::optional<EdgeBusInfo>;
 
     template <typename Weight>
@@ -43,6 +43,11 @@ namespace graph {
         const Edge<Weight>& GetEdge(EdgeId edge_id) const;
         IncidentEdgesRange GetIncidentEdges(VertexId vertex) const;
 
+        const std::vector<Edge<Weight>>& GetEdges() const;
+        const std::vector<IncidenceList>& GetVertexes() const;
+
+        std::vector<Edge<Weight>>& GetEdges();
+        std::vector<IncidenceList>& GetVertexes();
     private:
         // Вектор рёбер
         std::vector<Edge<Weight>> edges_;
@@ -81,5 +86,27 @@ namespace graph {
     typename DirectedWeightedGraph<Weight>::IncidentEdgesRange
         DirectedWeightedGraph<Weight>::GetIncidentEdges(VertexId vertex) const {
         return ranges::AsRange(incidence_lists_.at(vertex));
+    }
+
+    template <typename Weight>
+    const std::vector<Edge<Weight>>& DirectedWeightedGraph<Weight>::GetEdges() const {
+        return edges_;        
+    }
+
+    template <typename Weight>    
+    const typename std::vector<typename DirectedWeightedGraph<Weight>::IncidenceList>&
+        DirectedWeightedGraph<Weight>::GetVertexes() const {
+        return incidence_lists_;
+    }
+
+    template <typename Weight>
+    std::vector<Edge<Weight>>& DirectedWeightedGraph<Weight>::GetEdges() {
+        return edges_;
+    }
+
+    template <typename Weight>
+    typename std::vector<typename DirectedWeightedGraph<Weight>::IncidenceList>&
+        DirectedWeightedGraph<Weight>::GetVertexes() {
+        return incidence_lists_;
     }
 }  // namespace graph

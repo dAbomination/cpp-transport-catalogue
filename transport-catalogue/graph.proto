@@ -1,0 +1,26 @@
+syntax = "proto2";
+
+package transport_catalogue_serialize;
+
+message EdgeBusInfo{
+	required uint32 bus_number_ = 1;
+	required uint32 stops_count_ = 2;
+}
+
+message Edge{
+	required uint32 edge_id_ = 1;
+	required double weight_ = 2;
+	required uint32 from_ = 3;
+	required uint32 to_ = 4;
+	optional EdgeBusInfo info_ = 5;
+}
+
+message Vertex{
+	required uint32 vertex_id_ = 1;
+	repeated uint32 edge_id_ = 2;
+}
+
+message DirectedWeightedGraph{
+	repeated Edge edges_ = 1;
+	repeated Vertex incidence_lists_ = 2;
+}

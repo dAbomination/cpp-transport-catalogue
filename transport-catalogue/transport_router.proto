@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+import "graph.proto";
+
+package transport_catalogue_serialize;
+
+message RouterSettings{
+	uint32 bus_wait_time_ = 1;
+	uint32 bus_velocity_ = 2;
+}
+
+message IdToStop{
+	uint32 id_in_graph = 1;
+	uint32 stop_number_ = 2;
+}
+
+message TransportCatalogueGraph{
+	DirectedWeightedGraph graph_ = 1;	
+	IdToStop id_to_stop_number_ = 2;
+}

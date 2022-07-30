@@ -17,9 +17,7 @@ namespace RqstHandler {
 		loader.LoadJSON(input);
 		// Считываем данные входных запросов из файла и добавляем их в справочник
 		Deserialize(loader.ParseSerializationSettings().file);
-
-		// Считываем из потока выходные запросы и выполняем их
-		ExecuteOutputRequests(loader.ParseOutputRequests());
+				
 		PrintToJSON(output);
 	}
 
@@ -83,6 +81,7 @@ namespace RqstHandler {
 		// 3. Словарь - запрос на отрисовку карты в JSON формате, вида:
 		//    ["request_id"] = id запроса
 		//    ["map"] = данные отрисовки в строковом формате
+		// 4. Словарь - запрос на поиск пути
 		json_result_.StartArray();
 
 		for (const auto& req : requests) {
@@ -112,7 +111,7 @@ namespace RqstHandler {
 				const auto& bus_info = GetBusStat(std::get<JSONReader::BusOutputRequest>(req).bus_name_);
 				json_result_.StartDict();
 
-				// Добавляем данные иаршрута
+				// Добавляем данные маршрута
 				json_result_.Key("request_id").Value(std::get<JSONReader::BusOutputRequest>(req).request_id_);
 				if (bus_info.has_value()) {
 					json_result_.Key("curvature").Value(bus_info->curvature_);
@@ -289,9 +288,18 @@ namespace RqstHandler {
 	void RequestHandler::Serialize(Path file) {
 		serialization::TransportCatalogueSerializer serializer(file);
 
+		JSONReader::InputRequestPool input_requests = loader.ParseInputRequests();
+		router::TransportRouterSettings router_settings = loader.ParseRouterSettings();
+		// Добавляем данные в справочник, чтобы построить на их основе граф
+		ExecuteInputRequests(input_requests);
+		// Строим граф, чтобы затем его сохранить
+		router_ = std::make_unique<router::TransportRouter>(db_, router_settings);	
+
 		serializer.SerializeTransportCatalogue(
-			std::move(loader.ParseInputRequests()),
-			std::move(loader.ParseRenderSettings())
+			std::move(input_requests),
+			std::move(loader.ParseRenderSettings()),
+			std::move(loader.ParseRouterSettings()),
+			router_->GetGraph()
 		);
 	}
 
@@ -299,10 +307,18 @@ namespace RqstHandler {
 		serialization::TransportCatalogueSerializer deserializer(file);
 
 		JSONReader::InputRequestPool input_requests;
-		std::tie( input_requests , render_settings_) = std::move(deserializer.DeserializeTransportCatalogue());
+		router::TransportRouterSettings router_settings;
+		graph::DirectedWeightedGraph<double> graph;
+
+		std::tie( input_requests , render_settings_, router_settings, graph) = std::move(deserializer.DeserializeTransportCatalogue());
 
 		// Добавляем десериализованные данные в справочник
-		ExecuteInputRequests(input_requests);
+		ExecuteInputRequests(std::move(input_requests));
+		// Иницилизируем маршрутизатор по готовому графу
+		router_ = std::make_unique<router::TransportRouter>(db_, router_settings, std::move(graph));
+		
+		// Считываем из потока выходные запросы и выполняем их
+		ExecuteOutputRequests(std::move(loader.ParseOutputRequests()));
 	}
 
 } // namespace RqstHandler

@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 import "map_renderer.proto";
+import "transport_router.proto";
 
 package transport_catalogue_serialize;
 
@@ -11,10 +12,11 @@ message Stop{
 	double lng = 4;	
 }
 
-message Bus{
+message Bus{	
 	string bus_name_ = 1;
 	bool is_circular_ = 2;
 	repeated uint32 included_stops_ = 3;
+	uint32 bus_number_ = 4;
 }
 
 message StopToStopDistance{
@@ -28,4 +30,6 @@ message TransportCatalogue{
 	repeated Bus buses_ = 2;
 	repeated StopToStopDistance distances_= 3;
 	RenderSettings render_settings_ = 4;
+	TransportCatalogueGraph graph_ = 5;
+	RouterSettings router_settings_ = 6;
 }

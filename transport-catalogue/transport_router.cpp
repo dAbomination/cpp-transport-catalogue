@@ -3,7 +3,28 @@
 namespace router {
 
 	TransportRouter::TransportRouter(const Catalogue::TransportCatalogue& catalogue, const TransportRouterSettings& settings)
-		: catalogue_(catalogue), settings_(settings), graph_(std::move(CreateGraph())), transport_router_(graph_) {		
+		: catalogue_(catalogue), settings_(settings), graph_(std::move(CreateGraph())), transport_router_(graph_) {				
+	}
+
+	TransportRouter::TransportRouter(
+		const Catalogue::TransportCatalogue& catalogue,
+		const TransportRouterSettings& settings,
+		graph::DirectedWeightedGraph<double>&& graph
+	): catalogue_(catalogue), settings_(settings), graph_(std::move(graph)), transport_router_(graph_) {
+		// Так как номера остановок можно восстановить без записи в файл, нумеруем их
+		const auto& stops = catalogue_.GetAllStops();
+
+		size_t initial_id = 0;
+		for (const auto& stop : stops) {
+			stop_to_id_[stop.first] = initial_id;
+			id_to_stop_[initial_id] = stop.first;
+
+			initial_id += 2;
+		}
+	}
+
+	const graph::DirectedWeightedGraph<double> TransportRouter::GetGraph() const {
+		return graph_;
 	}
 
 	std::optional<RouteData> TransportRouter::BuildTransportRoute(std::string_view from, std::string_view to) {
@@ -32,7 +53,7 @@ namespace router {
 				// В ином случае едеме на автобусе
 				else {
 					route_result.route_points.emplace_back(RouteBusInfo{
-						edge.info.value().first->bus_name_,
+						edge.info.value().first,
 						edge.info.value().second,
 						edge.weight
 					});
@@ -74,7 +95,7 @@ namespace router {
 		// для кольцевого пути кол-во ребер (N*(N+1))/2 
 		// для некольцевого N*(N-1)
 		for (const auto& bus_name : buses_names) {
-			const domain::Bus* bus_search = catalogue_.FindBus(bus_name);
+			const domain::Bus* bus_search = catalogue_.FindBus(bus_name);			
 			// Остновки идут в порядке следования маршрута Stop1->Stop2-> ... ->StopN->Stop1
 			// (если маршрут кольцевой, Stop1 - конечная)
 			// Остновки идут в порядке следования маршрута Stop1->Stop2->Stop3 и потом в обратном порядке Stop3->Stop2->Stop1
@@ -88,11 +109,11 @@ namespace router {
 				// Добавляем рёбра для каждой последующей остановки в маршруте от stop_num_first
 				for (; stop_num_second < bus_search->stops_.size(); ++stop_num_second) {
 					dist += catalogue_.GetStopToStopDistance(bus_search->stops_[stop_num_second - 1], bus_search->stops_[stop_num_second]);
-
+					
 					transport_graph.AddEdge({ stop_to_id_[bus_search->stops_[stop_num_first]->stop_name_] + 1,
 						stop_to_id_[bus_search->stops_[stop_num_second]->stop_name_],
 						dist / (settings_.bus_velocity_ / 0.06),
-						std::make_pair(bus_search, stop_num_second - stop_num_first)
+						std::make_pair(std::string_view(bus_search->bus_name_), stop_num_second - stop_num_first)
 					});
 
 					// Для некольцевого необходимо рассчитать свой вес и добавить ребра в обратном направлении
@@ -102,7 +123,7 @@ namespace router {
 						transport_graph.AddEdge({ stop_to_id_[bus_search->stops_[stop_num_second]->stop_name_] + 1,
 							stop_to_id_[bus_search->stops_[stop_num_first]->stop_name_],
 							dist_reversed / (settings_.bus_velocity_ / 0.06),
-							std::make_pair(bus_search, stop_num_second - stop_num_first)
+							std::make_pair(std::string_view(bus_search->bus_name_), stop_num_second - stop_num_first)
 						});
 					}
 
@@ -116,7 +137,7 @@ namespace router {
 						transport_graph.AddEdge({ stop_to_id_[bus_search->stops_[stop_num_first]->stop_name_] + 1,
 							stop_to_id_[bus_search->stops_[0]->stop_name_],
 							dist / (settings_.bus_velocity_ / 0.06),
-							std::make_pair(bus_search, stop_num_second - stop_num_first)
+							std::make_pair(std::string_view(bus_search->bus_name_), stop_num_second - stop_num_first)
 						});
 					}
 				}
