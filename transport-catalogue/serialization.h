@@ -15,14 +15,12 @@
 
 namespace serialization {
 	using Path = std::filesystem::path;	
-	
-	// Входные запросы, настройки отрисовки
+		
 	using DeserializedData = std::tuple<
 		JSONReader::InputRequestPool,
 		renderer::RenderSettings, 
 		router::TransportRouterSettings,
-		graph::DirectedWeightedGraph<double>
-	>;
+		graph::DirectedWeightedGraph<double>>;
 
 	class TransportCatalogueSerializer {
 	public:
@@ -39,7 +37,7 @@ namespace serialization {
 	private:
 		Path file_;
 		transport_catalogue_serialize::TransportCatalogue catalogue_data_;	
-		// Контейнеры связывают имя остановки/маршрута и её/его имя
+		// Контейнеры связывают имя остановки/маршрута и её/его номер
 		std::unordered_map<int, std::string_view> number_to_stop_name_;
 		std::unordered_map<std::string_view, int> stop_name_to_number_;
 
