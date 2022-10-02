@@ -15,8 +15,8 @@ void PrintUsage(std::ostream& stream = std::cerr) {
 
 int main(int argc, char* argv[]) {
     //-----------Тесты-----------
-    tests::test0();
-    std::cout << "Test OK!" << std::endl;
+    // tests::test0();
+    // std::cout << "Test OK!" << std::endl;
     //---------------------------
     if (argc != 2) {
         PrintUsage();
@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
     // и её сериализация в файл.
     if (mode == "make_base"sv) {
         Catalogue::TransportCatalogue catalogue;
-        RqstHandler::RequestHandler handler(catalogue);
+        RqstHandler::RequestHandler handler(catalogue);        
 
         handler.MakeBase(std::cin);        
     }

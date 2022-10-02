@@ -1,0 +1,169 @@
+{
+  "serialization_settings": {
+	  "file": "transport_catalogue.db"
+  },
+  "routing_settings": {
+	  "bus_wait_time": 2,
+	  "bus_velocity": 30
+  },
+  "render_settings": {
+	  "width": 1200,
+	  "height": 500,
+	  "padding": 50,
+	  "stop_radius": 5,
+	  "line_width": 14,
+	  "bus_label_font_size": 20,
+	  "bus_label_offset": [
+		  7,
+		  15
+	  ],
+	  "stop_label_font_size": 18,
+	  "stop_label_offset": [
+		  7,
+		  -3
+	  ],
+	  "underlayer_color": [
+		  255,
+		  255,
+		  255,
+		  0.85
+	  ],
+	  "underlayer_width": 3,
+	  "color_palette": [
+		  "green",
+		  [
+			  255,
+			  160,
+			  0
+		  ],
+		  "red"
+	  ]
+  },
+  "base_requests": [
+	  {
+		  "type": "Bus",
+		  "name": "14",
+		  "stops": [
+			  "stop1",
+			  "stop2",
+			  "stop3",
+			  "stop4",
+			  "stop5",
+			  "stop6",
+			  "stop7",
+			  "stop1"
+		  ],
+		  "is_roundtrip": true
+	  },
+	  {
+		  "type": "Bus",
+		  "name": "24",
+		  "stops": [
+			  "stop7",
+			  "stop8",
+			  "stop2",
+			  "stop9"
+		  ],
+		  "is_roundtrip": false
+	  },
+	  {
+		  "type": "Bus",
+		  "name": "114",
+		  "stops": [
+			  "stop10",
+			  "stop3"
+		  ],
+		  "is_roundtrip": false
+	  },
+	  {
+		  "type": "Stop",
+		  "name": "stop1",
+		  "latitude": 43.590317,
+		  "longitude": 39.746833,
+		  "road_distances": {
+			  "stop2": 4300,
+			  "stop7": 2000
+		  }
+	  },
+	  {
+		  "type": "Stop",
+		  "name": "stop10",
+		  "latitude": 43.581969,
+		  "longitude": 39.719848,
+		  "road_distances": {
+			  "stop3": 850
+		  }
+	  },
+	  {
+		  "type": "Stop",
+		  "name": "stop2",
+		  "latitude": 43.598701,
+		  "longitude": 39.730623,
+		  "road_distances": {
+			  "stop9": 4500,
+			  "stop8": 1200,
+			  "stop3": 1900
+		  }
+	  },
+	  {
+		  "type": "Stop",
+		  "name": "stop3",
+		  "latitude": 43.587795,
+		  "longitude": 39.716901,
+		  "road_distances": {
+			  "stop10": 850,
+			  "stop4": 1740
+		  }
+	  },
+	  {
+		  "type": "Stop",
+		  "name": "stop4",
+		  "latitude": 43.578079,
+		  "longitude": 39.728068,
+		  "road_distances": {
+			  "stop5": 320
+		  }
+	  },
+	  {
+		  "type": "Stop",
+		  "name": "stop5",
+		  "latitude": 43.578509,
+		  "longitude": 39.730959,
+		  "road_distances": {
+			  "stop6": 370
+		  }
+	  },
+	  {
+		  "type": "Stop",
+		  "name": "stop6",
+		  "latitude": 43.579285,
+		  "longitude": 39.733742,
+		  "road_distances": {
+			  "stop7": 600
+		  }
+	  },
+	  {
+		  "type": "Stop",
+		  "name": "stop7",
+		  "latitude": 43.585586,
+		  "longitude": 39.733879,
+		  "road_distances": {
+			  "stop8": 1100
+		  }
+	  },
+	  {
+		  "type": "Stop",
+		  "name": "stop8",
+		  "latitude": 43.590041,
+		  "longitude": 39.732886,
+		  "road_distances": {}
+	  },
+	  {
+		  "type": "Stop",
+		  "name": "stop9",
+		  "latitude": 43.601202,
+		  "longitude": 39.715498,
+		  "road_distances": {}
+	  }
+  ]
+}
